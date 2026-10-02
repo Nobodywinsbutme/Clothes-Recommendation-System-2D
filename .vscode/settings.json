@@ -1,0 +1,10 @@
+{
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[java]": { "editor.defaultFormatter": "redhat.java" },
+  "[python]": { "editor.defaultFormatter": "ms-python.python" },
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "python.terminal.activateEnvironment": true
+}
