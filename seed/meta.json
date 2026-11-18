@@ -1,0 +1,7 @@
+{
+  "model": "ViT-B-32/openai",
+  "count": 20000,
+  "dim": 512,
+  "limit": 20000,
+  "seed": 42
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cách hoạt động của website Fashion Suggest</title>
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--ink:#18202D;--mute:#5B6678;--line:#D9DFEA;--acc:#2D5BE3;--acc-bg:#E7EDFD;--ok:#17806A;--ok-bg:#DFF3EE;--wait:#9A6B00;--wait-bg:#FFF2D6;--code:#EEF1F7}
+@media (prefers-color-scheme:dark){:root{--bg:#10151D;--card:#182030;--ink:#E7ECF5;--mute:#9AA6BB;--line:#2A3548;--acc:#7C9CFF;--acc-bg:#1F2C52;--ok:#52C9AA;--ok-bg:#123A33;--wait:#F0C060;--wait-bg:#3A2F12;--code:#1E283A}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 20px 64px}h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.2;margin:0 0 8px}
+h2{font-size:1.3rem;margin:40px 0 10px}p{margin:0 0 12px;max-width:72ch}.lead{color:var(--mute)}
+code{background:var(--code);padding:1px 6px;border-radius:4px;font:.9em Consolas,monospace}
+.chain{display:flex;flex-direction:column;gap:0;margin:14px 0}
+.node{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.node b{color:var(--acc)}.arrow{text-align:center;color:var(--mute);line-height:1.4}
+.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:10px 0}
+.tbl{overflow-x:auto;margin-bottom:14px}table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card);font-size:.94rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
+.done{color:var(--ok);font-weight:600}.plan{color:var(--wait);font-weight:600}
+.flow{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 16px;margin:10px 0}
+.flow li{margin-bottom:6px}
+</style></head><body><main>
+<h1>Cách hoạt động của website Fashion Suggest</h1>
+<p class="lead">Mô tả theo đúng kiến trúc trong repo của nhóm. Mục nào đã có code thì ghi "đã có", mục nào chưa có thì ghi "dự kiến".</p>
+
+<h2>1. Các thành phần và đường đi của yêu cầu</h2>
+<div class="chain">
+<div class="node"><b>Trình duyệt</b> (điện thoại hoặc máy tính): người dùng thao tác trên giao diện.</div><div class="arrow">↓</div>
+<div class="node"><b>Frontend: Next.js 14</b> (cổng 3000): vẽ giao diện, gọi API của backend.</div><div class="arrow">↓</div>
+<div class="node"><b>Backend: Spring Boot</b> (cổng 8080): đăng ký/đăng nhập, lưu dữ liệu người dùng, và là cổng duy nhất nói chuyện với AI service.</div><div class="arrow">↓</div>
+<div class="side">
+<div class="node"><b>MySQL</b> (3306): tài khoản, lịch sử phối đồ, feedback.</div>
+<div class="node"><b>AI service: FastAPI + CLIP</b> (8000): tạo vector, tìm và chấm điểm gợi ý.</div></div>
+<div class="arrow">↓ (từ AI service)</div>
+<div class="node"><b>Qdrant</b> (6333): kho vector của các món đồ DeepFashion.</div>
+</div>
+<p>Trình duyệt không gọi thẳng AI service hay Qdrant. Backend đứng giữa để kiểm tra đăng nhập và giữ dữ liệu người dùng; AI service chỉ lo phần học máy.</p>
+
+<h2>2. Đăng nhập hoạt động thế nào (JWT)</h2>
+<ol class="flow">
+<li>Người dùng gửi email và mật khẩu tới <code>POST /api/auth/login</code>.</li>
+<li>Backend kiểm tra mật khẩu (đã băm), nếu đúng thì trả về một <b>token JWT</b>.</li>
+<li>Frontend giữ token, và <b>mỗi lần gọi API cần đăng nhập</b> thì gửi kèm header <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li>Backend có bộ lọc <code>JwtAuthFilter</code> đọc token này để biết ai đang gọi.</li>
+</ol>
+<p>Hiện tại <code>lib/api.ts</code> của frontend chưa gắn header này và chưa lưu token, nên bước 3 là việc cần làm.</p>
+
+<h2>3. Một phiên dùng từ đầu đến cuối</h2>
+<ol class="flow">
+<li>Người dùng đăng ký hoặc đăng nhập.</li>
+<li>Màn hình onboarding hiện câu hỏi trắc nghiệm. Frontend gửi câu trả lời cho backend, backend lưu vào cột <code>styleProfileJson</code>.</li>
+<li>Backend chuyển câu trả lời sang AI service. AI service tạo vector người dùng, hỏi Qdrant, trả về danh sách món đồ.</li>
+<li>Frontend hiển thị món đồ. Người dùng bấm like hoặc dislike.</li>
+<li>Backend lưu feedback vào MySQL và báo AI service cập nhật vector. AI service trả danh sách mới.</li>
+<li>Lặp lại bước 4 và 5. Khi ưng ý một bộ đồ, người dùng lưu vào lịch sử phối đồ.</li>
+</ol>
+
+<h2>4. Các API và tình trạng</h2>
+<div class="tbl"><table>
+<tr><th>Thành phần</th><th>API / chức năng</th><th>Tình trạng</th></tr>
+<tr><td>Backend</td><td><code>POST /api/auth/register</code>, <code>POST /api/auth/login</code>, <code>GET /api/auth/me</code></td><td class="done">Đã có</td></tr>
+<tr><td>Backend</td><td><code>GET/POST /api/history</code> (lịch sử phối đồ)</td><td class="done">Đã có</td></tr>
+<tr><td>Backend</td><td><code>/api/health</code>, <code>/api/ping-ai</code></td><td class="done">Đã có</td></tr>
+<tr><td>AI service</td><td><code>/health</code>, <code>/health/qdrant</code>, <code>/embed/text</code></td><td class="done">Đã có</td></tr>
+<tr><td>Backend</td><td>Lưu câu trả lời onboarding</td><td class="plan">Dự kiến</td></tr>
+<tr><td>Backend</td><td>Lấy gợi ý, nhận like/dislike</td><td class="plan">Dự kiến</td></tr>
+<tr><td>AI service</td><td><code>/recommend</code>, cập nhật vector từ feedback</td><td class="plan">Dự kiến</td></tr>
+<tr><td>Frontend</td><td>Trang chủ, đăng nhập, đăng ký</td><td class="done">Đã có</td></tr>
+<tr><td>Frontend</td><td>Onboarding, màn hình like/dislike, lịch sử</td><td class="plan">Dự kiến</td></tr>
+</table></div>
+<p>Tên các API "dự kiến" chỉ là đề xuất, nhóm sẽ chốt khi thiết kế contract giữa backend và AI service.</p>
+
+<h2>5. Chạy hệ thống</h2>
+<p>Cách thông thường: <code>docker compose up -d mysql qdrant</code> để bật hai database, rồi chạy AI service, backend và frontend trong VS Code (task <code>dev: all</code>). Hoặc chạy tất cả trong Docker bằng <code>docker compose --profile full up --build</code>. Trang <code>http://localhost:3000</code> hiển thị trạng thái backend và AI service để kiểm tra nhanh.</p>
+</main></body></html>

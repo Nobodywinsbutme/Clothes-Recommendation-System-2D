@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chuyển hóa đồ thành vector và sắp xếp</title>
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--ink:#18202D;--mute:#5B6678;--line:#D9DFEA;--acc:#2D5BE3;--acc-bg:#E7EDFD;--ok:#17806A;--ok-bg:#DFF3EE;--code:#EEF1F7}
+@media (prefers-color-scheme:dark){:root{--bg:#10151D;--card:#182030;--ink:#E7ECF5;--mute:#9AA6BB;--line:#2A3548;--acc:#7C9CFF;--acc-bg:#1F2C52;--ok:#52C9AA;--ok-bg:#123A33;--code:#1E283A}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 20px 64px}h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.2;margin:0 0 8px}
+h2{font-size:1.3rem;margin:40px 0 10px}p{margin:0 0 12px;max-width:72ch}.lead{color:var(--mute)}
+code{background:var(--code);padding:1px 6px;border-radius:4px;font:.9em Consolas,monospace}
+pre{background:var(--code);padding:12px 16px;border-radius:8px;overflow-x:auto;font:.88rem/1.55 Consolas,monospace}
+.pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:12px 0}
+.pipe div{flex:1 1 130px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:.92rem}
+.pipe div b{display:block;color:var(--acc)}
+.tbl{overflow-x:auto;margin-bottom:14px}table{border-collapse:collapse;width:100%;min-width:460px;background:var(--card);font-size:.95rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}th{background:var(--code)}
+tr.up td{background:var(--ok-bg)}
+.note{background:var(--acc-bg);border-left:4px solid var(--acc);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0}
+</style></head><body><main>
+<h1>Chuyển hóa đồ thành vector và sắp xếp bằng vector</h1>
+<p class="lead">Máy tính không "nhìn" ảnh như người. Nó so sánh các dãy số. File này đi qua hai việc: biến mỗi món đồ thành dãy số, rồi dùng dãy số đó để xếp hạng.</p>
+
+<h2>1. Từ ảnh đến vector</h2>
+<div class="pipe">
+<div><b>Ảnh gốc</b>Ảnh trong DeepFashion</div>
+<div><b>Cắt theo bbox</b>Giữ món đồ, bỏ nền thừa (dùng file bounding box)</div>
+<div><b>Chuẩn hóa ảnh</b>Đổi kích thước về 224×224, chuẩn hóa màu theo CLIP</div>
+<div><b>CLIP image encoder</b>Cho ra vector 512 số</div>
+<div><b>Chuẩn hóa vector</b>Chia để độ dài bằng 1</div>
+<div><b>Lưu Qdrant</b>Vector + payload (category, attribute, đường dẫn ảnh)</div>
+</div>
+<p>Câu mô tả từ onboarding đi qua <b>CLIP text encoder</b> và cũng ra vector 512 số, nằm trong cùng không gian với vector ảnh. Vì vậy ảnh và chữ so sánh trực tiếp được với nhau.</p>
+<pre>payload mẫu của một món đồ trong Qdrant:
+{ "id": 10234, "image": "img/Floral_Dress/img_00001.jpg",
+  "category": "Dress", "attributes": ["floral", "sleeveless"] }</pre>
+
+<h2>2. Sắp xếp bằng vector</h2>
+<p>Độ giống giữa hai vector là <b>cosine similarity</b>. Khi cả hai đã chuẩn hóa độ dài về 1, nó bằng đúng tích vô hướng, tức là nhân từng cặp số rồi cộng lại. Giá trị càng lớn thì hai thứ càng giống. Qdrant tính việc này rất nhanh trên cả nghìn vector.</p>
+<div class="note"><b>Ví dụ thu nhỏ (2 chiều thay vì 512).</b> Người dùng <code>q = (0.6, 0.8)</code>. Bốn món đồ:</div>
+<div class="tbl"><table>
+<tr><th>Món</th><th>Vector</th><th>Điểm = q · vector</th><th>Hạng</th></tr>
+<tr><td>A</td><td>(0.8, 0.6)</td><td>0.96</td><td>1</td></tr>
+<tr><td>B</td><td>(0.0, 1.0)</td><td>0.80</td><td>2</td></tr>
+<tr><td>C</td><td>(1.0, 0.0)</td><td>0.60</td><td>3</td></tr>
+<tr><td>D</td><td>(−0.6, 0.8)</td><td>0.28</td><td>4</td></tr>
+</table></div>
+
+<h2>3. Học từ like: vector người dùng dịch chuyển</h2>
+<p>Người dùng like món C. Với α=1, β=0.8, γ=0 (chưa có dislike): <code>q' = q + 0.8·C = (1.4, 0.8)</code>, chuẩn hóa thành khoảng <code>(0.868, 0.496)</code>. Tính lại điểm:</p>
+<div class="tbl"><table>
+<tr><th>Món</th><th>Điểm mới</th><th>Hạng mới</th></tr>
+<tr><td>A</td><td>0.99</td><td>1 (giữ nguyên)</td></tr>
+<tr class="up"><td>C</td><td>0.87</td><td>2 (tăng từ hạng 3)</td></tr>
+<tr><td>B</td><td>0.50</td><td>3 (giảm từ hạng 2)</td></tr>
+<tr><td>D</td><td>−0.12</td><td>4</td></tr>
+</table></div>
+<p>Chỉ một lượt like đã đưa món giống C lên cao hơn. Dislike làm ngược lại: trừ đi vector món bị dislike (hệ số γ), đẩy vector người dùng ra xa món đó. Thực tế vector có 512 chiều nên không vẽ được, nhưng phép tính hoàn toàn giống ví dụ này.</p>
+<p>Con số trong ví dụ là số bịa để minh họa cách tính, không phải kết quả đo từ DeepFashion.</p>
+</main></body></html>

@@ -1,8 +1,12 @@
-# torch cài riêng (xem README / Dockerfile) để chọn bản CPU hoặc CUDA phù hợp
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-qdrant-client==1.12.1
-transformers==4.46.3
-pillow==11.0.0
-numpy<2.2
-python-dotenv==1.0.1
+# torch + torchvision cài RIÊNG trước (xem README, mục "Cài AI service"):
+# mỗi máy cần một bản khác nhau (NVIDIA GPU / Apple Silicon / CPU).
+# Nếu bỏ qua bước đó, pip sẽ tự kéo torch bản mặc định (trên Windows là bản CPU).
+#
+# Phiên bản dưới đây lấy từ môi trường đã chạy được CLIP + GPU trên Python 3.14.
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+qdrant-client==1.19.1
+open_clip_torch==3.3.0
+pillow==12.3.0
+numpy==2.5.4
+python-dotenv==1.2.4

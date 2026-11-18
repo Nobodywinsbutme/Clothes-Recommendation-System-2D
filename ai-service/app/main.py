@@ -5,8 +5,17 @@ from . import config
 
 app = FastAPI(title="Fashion AI Service")
 
-_qdrant = QdrantClient(url=config.QDRANT_URL)
-_clip = {}  # cache lazy: model + processor chỉ tải khi gọi lần đầu
+# check_compatibility=False: tắt cảnh báo lệch phiên bản giữa qdrant-client và server Docker.
+_qdrant = QdrantClient(url=config.QDRANT_URL, check_compatibility=False)
+_clip = {}  # cache lazy: model chỉ tải khi gọi lần đầu
+
+
+def get_clip():
+    if "clip" not in _clip:
+        from .clip_utils import load_clip
+
+        _clip["clip"] = load_clip(config.CLIP_MODEL, config.CLIP_PRETRAINED, config.DEVICE)
+    return _clip["clip"]
 
 
 @app.get("/health")
@@ -25,17 +34,7 @@ def health_qdrant():
 
 @app.post("/embed/text")
 def embed_text(payload: dict):
-    """Hello world CLIP: trả về embedding của một câu mô tả.
-    Lần gọi đầu sẽ tải model (~600MB)."""
-    import torch
-    from transformers import CLIPModel, CLIPProcessor
-
-    if "model" not in _clip:
-        _clip["model"] = CLIPModel.from_pretrained(config.CLIP_MODEL).eval()
-        _clip["proc"] = CLIPProcessor.from_pretrained(config.CLIP_MODEL)
-
-    inputs = _clip["proc"](text=[payload.get("text", "")], return_tensors="pt", padding=True)
-    with torch.no_grad():
-        vec = _clip["model"].get_text_features(**inputs)
-    vec = torch.nn.functional.normalize(vec, dim=-1)[0]
-    return {"dim": vec.shape[0], "embedding": vec.tolist()}
+    """Trả về embedding CLIP của một câu mô tả. Lần gọi đầu sẽ tải model."""
+    clip = get_clip()
+    vec = clip.encode_texts([payload.get("text", "")])[0]
+    return {"dim": int(vec.shape[0]), "device": clip.device, "embedding": vec.tolist()}

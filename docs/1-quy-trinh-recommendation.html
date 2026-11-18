@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quy trình hoạt động của hệ thống gợi ý</title>
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--ink:#18202D;--mute:#5B6678;--line:#D9DFEA;--acc:#2D5BE3;--acc-bg:#E7EDFD;--ok:#17806A;--ok-bg:#DFF3EE;--code:#EEF1F7}
+@media (prefers-color-scheme:dark){:root{--bg:#10151D;--card:#182030;--ink:#E7ECF5;--mute:#9AA6BB;--line:#2A3548;--acc:#7C9CFF;--acc-bg:#1F2C52;--ok:#52C9AA;--ok-bg:#123A33;--code:#1E283A}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 20px 64px}h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.2;margin:0 0 8px}
+h2{font-size:1.3rem;margin:40px 0 10px}p{margin:0 0 12px;max-width:72ch}.lead{color:var(--mute)}
+code{background:var(--code);padding:1px 6px;border-radius:4px;font:.9em Consolas,monospace}
+.phase{border-left:4px solid var(--acc);background:var(--card);border-radius:0 8px 8px 0;padding:6px 16px 10px;margin:12px 0}
+.phase.on{border-color:var(--ok)}.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px 10px 52px;margin-bottom:8px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:14px;top:10px;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;line-height:26px;font-weight:600;font-size:.9rem}
+.steps b{display:block}.steps span{color:var(--mute);font-size:.94rem}
+.loop{background:var(--ok-bg);border:1px dashed var(--ok);border-radius:8px;padding:12px 16px;margin:12px 0}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:520px;background:var(--card);font-size:.95rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
+</style></head><body><main>
+<h1>Quy trình hoạt động của hệ thống gợi ý</h1>
+<p class="lead">Hệ thống gồm hai giai đoạn: chuẩn bị dữ liệu một lần (ngoại tuyến), và phục vụ từng người dùng (trực tuyến). Cách gợi ý là content-based với embedding CLIP, học dần từ like/dislike trong cùng phiên.</p>
+
+<h2>Giai đoạn A: chuẩn bị dữ liệu (làm một lần)</h2>
+<div class="phase"><ol class="steps">
+<li><b>Nạp DeepFashion</b><span>Đọc ảnh và các file nhãn (category, attribute, bounding box).</span></li>
+<li><b>Chuyển mỗi món đồ thành vector</b><span>CLIP biến ảnh thành vector 512 số (chi tiết ở file 2).</span></li>
+<li><b>Lưu vào Qdrant</b><span>Mỗi món đồ gồm vector và thông tin đi kèm: đường dẫn ảnh, category, attribute.</span></li>
+</ol></div>
+
+<h2>Giai đoạn B: phục vụ một người dùng</h2>
+<div class="phase on"><ol class="steps">
+<li><b>Onboarding</b><span>Người dùng trả lời trắc nghiệm: phong cách, dịp mặc, loại đồ, màu, dáng người.</span></li>
+<li><b>Tạo vector ban đầu</b><span>Ghép câu trả lời thành một câu mô tả, ví dụ "casual outfit for a party", rồi CLIP biến câu đó thành vector <code>q</code>. Câu trả lời về loại đồ dùng làm bộ lọc category.</span></li>
+<li><b>Tìm ứng viên</b><span>Qdrant trả về các món có vector gần <code>q</code> nhất (sau khi lọc).</span></li>
+<li><b>Loại trùng, sắp xếp, hiển thị</b><span>Bỏ các món đã xem, xếp theo độ giống, hiển thị một món hoặc một nhóm nhỏ để like/dislike.</span></li>
+<li><b>Nhận feedback</b><span>Người dùng bấm like hoặc dislike.</span></li>
+<li><b>Cập nhật vector người dùng</b><span><code>q' = α·q + β·mean(like) − γ·mean(dislike)</code>, rồi chuẩn hóa về độ dài 1.</span></li>
+</ol>
+<div class="loop"><b>Quay lại bước 3 với <code>q'</code>.</b> Mỗi lượt feedback làm danh sách gợi ý sát sở thích hơn. Đây là "re-rank theo thời gian thực" trong proposal.</div></div>
+
+<h2>Ví dụ một lượt</h2>
+<div class="tbl"><table>
+<tr><th>Lượt</th><th>Điều xảy ra</th><th>Kết quả</th></tr>
+<tr><td>0</td><td>Onboarding: casual, đi chơi, váy/đầm</td><td>Top gợi ý là các đầm đơn giản, màu nhẹ</td></tr>
+<tr><td>1</td><td>Like đầm hoa, dislike đầm bó sát</td><td><code>q'</code> dịch về phía đầm hoa, xa đầm bó</td></tr>
+<tr><td>2</td><td>Tìm lại bằng <code>q'</code></td><td>Top gợi ý nhiều đầm hoa rộng hơn</td></tr>
+</table></div>
+<h2>Những điểm cần nhớ</h2>
+<p>Hệ thống không cần lịch sử mua hàng, chỉ cần câu trả lời onboarding và feedback trong phiên. Đây là cách giải bài toán cold-start mà collaborative filtering không làm được. Các hệ số α, β, γ là tham số nhóm sẽ thử nghiệm và chọn dựa trên kết quả đánh giá.</p>
+</main></body></html>

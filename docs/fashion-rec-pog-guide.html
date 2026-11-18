@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Áp dụng POG vào project: từ lịch sử mua đến bộ trang phục gợi ý</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F3; --grid:rgba(22,36,58,.055); --card:#FFFFFF; --ink:#16243A; --muted:#566478;
+  --line:#CBD4DE; --d2:#2F6DB5; --d2bg:#E3EDF8; --vec:#0C8577; --vecbg:#DDF1EE;
+  --d3:#8A3FB5; --d3bg:#EFE2F6; --chalk:#F2C230; --chalkbg:#FBF0C7; --warn:#B3541E; --warnbg:#FBE8DA; --code:#EEF2F6;
+  --font:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1623; --grid:rgba(230,236,243,.05); --card:#162235; --ink:#E6ECF3; --muted:#9AA9BC;
+    --line:#2A3A52; --d2:#6AA6EA; --d2bg:#16314F; --vec:#41C2B2; --vecbg:#123A3A;
+    --d3:#C48BE6; --d3bg:#32224A; --chalkbg:#3B3414; --warn:#F0A06A; --warnbg:#3F2A1A; --code:#1B2A40;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1623; --grid:rgba(230,236,243,.05); --card:#162235; --ink:#E6ECF3; --muted:#9AA9BC;
+  --line:#2A3A52; --d2:#6AA6EA; --d2bg:#16314F; --vec:#41C2B2; --vecbg:#123A3A;
+  --d3:#C48BE6; --d3bg:#32224A; --chalkbg:#3B3414; --warn:#F0A06A; --warnbg:#3F2A1A; --code:#1B2A40;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.65;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;background-attachment:fixed}
+a{color:var(--d2)}
+:focus-visible{outline:3px solid var(--chalk);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+h1,h2,h3{line-height:1.25;margin:0}
+h1{font-size:clamp(1.9rem,4.4vw,2.8rem);font-weight:700;letter-spacing:-.02em;max-width:24ch}
+h2{font-size:clamp(1.4rem,2.6vw,1.8rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:.6em 0;max-width:70ch}
+code,.mono{font-family:var(--mono);font-size:.88em;background:var(--code);padding:.1em .35em;border-radius:4px}
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;gap:6px;align-items:center;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+.topbar a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:.9rem;padding:4px 10px;border-radius:999px}
+.topbar a:hover{background:var(--card);color:var(--ink)}
+.topbar .sp{flex:1}
+.topbar button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+section{padding:54px 0 6px}
+.hero{padding-top:42px}
+.lead{font-size:1.1rem;color:var(--muted);max-width:62ch}
+.answer{display:block;margin-top:16px;background:var(--chalkbg);border-left:5px solid var(--chalk);padding:12px 16px;border-radius:0 8px 8px 0;max-width:72ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.note{background:var(--warnbg);border-left:5px solid var(--warn);padding:10px 14px;border-radius:0 8px 8px 0;margin:16px 0;max-width:74ch;font-size:.95rem}
+.ok{background:var(--vecbg);border-left:5px solid var(--vec);padding:10px 14px;border-radius:0 8px 8px 0;margin:16px 0;max-width:74ch;font-size:.95rem}
+.tag{display:inline-block;font-size:.76rem;font-weight:500;padding:1px 9px;border-radius:999px;border:1px solid currentColor;margin-left:6px;vertical-align:middle}
+.t2d{color:var(--d2);background:var(--d2bg)} .tvec{color:var(--vec);background:var(--vecbg)} .t3d{color:var(--d3);background:var(--d3bg)} .twarn{color:var(--warn);background:var(--warnbg)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:color-mix(in srgb,var(--card) 70%,var(--paper));font-weight:700}
+tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;margin:14px 0}
+.scroll table{min-width:600px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.55;margin:12px 0}
+.pick{outline:3px solid var(--d3);outline-offset:-3px}
+ul,ol{max-width:72ch}
+
+/* generation stepper */
+.gen{margin-top:24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+@media (max-width:900px){.gen{grid-template-columns:1fr}}
+.hist{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 12px;font-size:.88rem}
+.sc{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.btn{font:inherit;font-size:.92rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 15px;cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--chalk);border-color:var(--chalk);color:#16243A;font-weight:500}
+.btn.go{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.trace{list-style:none;padding:0;margin:0}
+.trace li{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:10px}
+.trace li.cur{border-color:var(--ink);box-shadow:0 0 0 2px var(--chalk)}
+.cands{margin:8px 0 0;padding:0;list-style:none}
+.cands li{display:flex;justify-content:space-between;gap:10px;border:0;padding:3px 0;margin:0;background:none;font-size:.9rem}
+.cands li.win{font-weight:700;color:var(--vec)}
+.outfit{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.piece{border:2px solid var(--vec);background:var(--vecbg);border-radius:10px;padding:6px 12px;font-weight:500}
+.piece.end{border-style:dashed;color:var(--muted);background:none;border-color:var(--line)}
+footer{padding:40px 0 60px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a href="#pog">POG là gì</a>
+    <a href="#map">Ánh xạ vào project</a>
+    <a href="#data">Vấn đề dữ liệu</a>
+    <a href="#pipe">Chuẩn bị dữ liệu</a>
+    <a href="#model">Mô hình</a>
+    <a href="#infer">Sinh outfit</a>
+    <a href="#eval">Đánh giá</a>
+    <a href="#plan">Lộ trình</a>
+    <span class="sp"></span>
+    <button id="theme" type="button" aria-label="Đổi giao diện sáng tối">Sáng / Tối</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="hero" id="top">
+  <h1>Áp dụng POG để gợi ý cả bộ trang phục</h1>
+  <p class="lead">POG (Alibaba, KDD 2019, arXiv 1905.01866) không chỉ chọn từng món rời. Nó <b>tạo ra cả outfit</b>, từng món một, sao cho các món hợp nhau và hợp với sở thích suy ra từ lịch sử của người dùng.</p>
+  <div class="answer"><b>Trả lời ngắn gọn.</b> Bạn dùng được POG, nhưng có một vấn đề lớn: POG học từ dữ liệu outfit, còn H&amp;M <b>không có outfit</b>. Cách thực tế nhất là tạo "outfit giả lập" từ giỏ hàng (các món một người mua cùng ngày), và nói rõ đó là tín hiệu thay thế trong báo cáo. Vector CLIP hoặc FashionCLIP của bạn đóng vai trò đầu vào của mô hình.</div>
+
+  <div class="gen" aria-label="Minh họa sinh outfit từng bước">
+    <div>
+      <h2 style="font-size:1.2rem">Xem POG sinh outfit từng bước</h2>
+      <p style="margin-top:6px">Chọn một người dùng, rồi bấm "Bước tiếp" để xem decoder chọn từng món.</p>
+      <div class="sc" id="scen" role="group" aria-label="Chọn người dùng mẫu"></div>
+      <h3 style="font-size:.95rem">Lịch sử mua của người dùng này</h3>
+      <div class="hist" id="hist"></div>
+      <div class="sc">
+        <button class="btn go" id="next" type="button">Bước tiếp</button>
+        <button class="btn" id="reset" type="button">Làm lại</button>
+      </div>
+      <h3 style="font-size:.95rem;margin-top:10px">Outfit đang được tạo</h3>
+      <div class="outfit" id="outfit" aria-live="polite"></div>
+      <p style="font-size:.84rem;color:var(--muted)">Tên món và xác suất trong hình minh họa này do tôi tự đặt để bạn thấy thứ tự các bước. Đó không phải kết quả của một mô hình đã huấn luyện.</p>
+    </div>
+    <ol class="trace" id="trace"></ol>
+  </div>
+</section>
+
+<section id="pog">
+  <h2>POG gồm ba bước</h2>
+  <p>Bài báo giải hai yêu cầu cùng lúc: <b>tương thích</b> (các món trong outfit hợp nhau) và <b>cá nhân hóa</b> (outfit hợp gu người dùng). Họ dựa trên quan sát rằng người dùng có gu giống nhau ở món lẻ và ở cả outfit: ví dụ 81,3% outfit người dùng bấm chứa loại món đã xuất hiện trong 50 món họ bấm gần nhất.</p>
+  <div class="scroll"><table>
+    <tr><th>Bước</th><th>Làm gì</th><th>Chi tiết theo bài báo</th></tr>
+    <tr><td>1. Embedding đa phương thức</td><td>Biến mỗi món thành một vector</td><td>Ghép vector ảnh, vector tiêu đề và vector hành vi, qua một lớp FC ra 128 chiều, huấn luyện bằng triplet loss (margin 0,1) theo loại món</td></tr>
+    <tr><td>2. FOM (Fashion Outfit Model)</td><td>Học "món này hợp với các món còn lại"</td><td>Che từng món trong outfit, bắt Transformer encoder đoán lại món bị che từ các món còn lại. Coi outfit là tập hợp, không có thứ tự, nên không dùng positional embedding</td></tr>
+    <tr><td>3. POG</td><td>Sinh outfit cá nhân hóa</td><td>Encoder (Per network) đọc lịch sử người dùng. Decoder (Gen network, khởi tạo từ FOM) sinh từng món, cho tới khi gặp token kết thúc</td></tr>
+  </table></div>
+  <p>Các số chính trong bài: vector món 128 chiều, hidden 64 chiều, 6 lớp, 8 head, lấy 50 món gần nhất làm lịch sử, mỗi lần so sánh dùng đáp án đúng cùng 3 món ngẫu nhiên.</p>
+  <div class="note"><b>Về kết quả trong bài.</b> FITB (điền chỗ trống) đạt 68,79%, CP (đoán outfit có hợp không) đạt AUC 86,32%, và thử nghiệm trực tuyến trên Alibaba cho CTR cao hơn 70% so với Bi-LSTM kết hợp CF. Tất cả đo trên dữ liệu và người dùng của Alibaba. Bạn không nên kỳ vọng tái lập đúng các con số đó trên H&amp;M, và không có người dùng thật nào để đo CTR.</div>
+  <p>Một chi tiết hữu ích cho bạn: trong thí nghiệm của họ, vector từ <b>chữ</b> đứng riêng (FITB 68,02%) tốt hơn vector từ <b>ảnh</b> đứng riêng (62,85%), và ghép ảnh với chữ nhỉnh hơn một chút (68,24%). Điều này gợi ý phần mô tả chữ của H&amp;M đáng được dùng tốt, không chỉ ảnh.</p>
+</section>
+
+<section id="map">
+  <h2>Ánh xạ POG vào project của bạn</h2>
+  <div class="scroll"><table>
+    <tr><th>Thành phần trong POG</th><th>Bài báo dùng</th><th>Project của bạn</th></tr>
+    <tr><td>Vector món</td><td>Inception-ResNet ảnh (1536) + TextCNN tiêu đề (300) + vector hành vi của Alibaba (160) → 128</td><td>Vector ảnh và chữ của <b>CLIP hoặc FashionCLIP</b> (mỗi loại 512). Có thể đưa thẳng vào transition layer, hoặc thêm một lớp FC thu về 128 chiều. Vector hành vi là tùy chọn, có thể tạo từ <code>transactions_train.csv</code></td></tr>
+    <tr><td>Loại món (80 leaf category)</td><td>Loại lá của Taobao</td><td><code>product_type_name</code> của H&amp;M, và nhóm áo/quần để làm luật</td></tr>
+    <tr><td>Outfit</td><td>1,01 triệu outfit do chuyên gia tạo</td><td>Outfit giả lập từ giỏ hàng (xem phần dữ liệu), hoặc Polyvore</td></tr>
+    <tr><td>Lịch sử người dùng</td><td>50 món bấm gần nhất</td><td>50 món đã mua gần nhất (hoặc vài món người dùng chọn thích, khi demo)</td></tr>
+    <tr><td>Outfit người dùng bấm</td><td>Outfit được bấm sau chuỗi bấm đó</td><td>Giỏ hàng áo + quần ở lần mua kế tiếp</td></tr>
+    <tr><td>Tập ứng viên + Faiss + luật loại món</td><td>Hàng triệu món, luật như "sau áo thun chỉ tìm quần và giày"</td><td>Khi đánh giá: pool 2D vài nghìn món. Khi demo: <b>catalog 3D</b> 20 đến 40 món. Luật: sau áo tìm quần. Dùng tích vô hướng trước, Faiss hoặc Qdrant sau</td></tr>
+    <tr><td>Chỉ số</td><td>FITB, CP, CTR trực tuyến</td><td>FITB và CP offline, cộng Hit/Recall/NDCG@K đã có trong tài liệu dự án</td></tr>
+  </table></div>
+  <div class="ok"><b>POG không có gì về số đo cơ thể hay dịp sử dụng.</b> Hai thứ đó, cùng tủ đồ và gợi ý size, là phần mở rộng của riêng bạn. Chúng ghép được vào hệ thống nhưng POG không chứng minh điều gì về chúng.</div>
+</section>
+
+<section id="data">
+  <h2>Vấn đề lớn: H&amp;M không có outfit</h2>
+  <p>POG huấn luyện trên cặp "lịch sử người dùng → outfit". H&amp;M chỉ có giao dịch: ai mua món nào vào ngày nào. Có ba hướng.</p>
+  <div class="scroll"><table>
+    <tr><th>Hướng</th><th>Ưu điểm</th><th>Hạn chế</th></tr>
+    <tr class="pick"><td><b>1. Outfit giả lập từ giỏ hàng H&amp;M</b> (khuyên làm lõi)</td><td>Dùng đúng dữ liệu bạn đang xử lý, có sẵn lịch sử người dùng và thời gian, không cần gán nhãn</td><td>Mua chung chưa chắc là phối đẹp: người ta mua nhiều màu cùng loại hoặc mua cho nhiều người. Giỏ áo + quần thường chỉ 2 đến 3 món, trong khi bài báo chỉ giữ outfit từ 4 món</td></tr>
+    <tr><td>2. Dataset POG phát hành</td><td>Đúng loại dữ liệu bài báo dùng: outfit chuyên gia tạo và hành vi người dùng. Có ba bảng: outfit, user, item (<code>item_id, cate_id, pic_url, title</code>)</td><td>Là dữ liệu Taobao, không phải món H&amp;M nên không gợi ý đồ H&amp;M được. Dữ liệu để ở Google Drive (repo chỉ có mô tả định dạng, không có code mô hình). Tôi chưa kiểm tra ảnh qua <code>pic_url</code> còn tải được không, và tiêu đề có thể là tiếng Trung mà CLIP/FashionCLIP chủ yếu học tiếng Anh</td></tr>
+    <tr><td>3. Polyvore Outfits</td><td>Outfit do người tạo, đã nằm trong tài liệu dự án ở mức P1</td><td>Không có hành vi người dùng nên chỉ huấn luyện được phần tương thích (FOM), không có Per network. Cần kiểm tra license và cách tải hiện tại, tôi chưa kiểm tra</td></tr>
+  </table></div>
+  <div class="note"><b>Phải nói thẳng trong báo cáo.</b> Với hướng 1, mô hình học "những món hay được mua cùng nhau", đây là tín hiệu thay thế cho "phối đồ hợp". Kết quả tốt trên H&amp;M không chứng minh outfit đẹp theo gu thẩm mỹ. Nếu còn thời gian, dùng Polyvore để pretrain phần tương thích sẽ giảm hạn chế này.</div>
+</section>
+
+<section id="pipe">
+  <h2>Chuẩn bị dữ liệu theo hướng 1</h2>
+  <p>Tôi đã viết và kiểm thử trên dữ liệu giả hàm tạo mẫu "lịch sử → outfit". Nó có trong file <code>ai-service/scripts/outfit_samples.py</code>.</p>
+<pre>import pandas as pd
+
+TOP, BOTTOM = &quot;Garment Upper body&quot;, &quot;Garment Lower body&quot;
+
+def build_samples(tx: pd.DataFrame, art: pd.DataFrame, min_items=2, max_items=6, hist_len=50):
+    &quot;&quot;&quot;tx: t_dat, customer_id, article_id | art: article_id, product_group_name
+    Trả về danh sách mẫu kiểu POG: (user, lịch sử mua trước đó, outfit = giỏ hàng ngày đó).&quot;&quot;&quot;
+    grp = art.set_index(&quot;article_id&quot;)[&quot;product_group_name&quot;]
+    tx = tx[tx[&quot;article_id&quot;].isin(grp.index)].copy()
+    tx[&quot;grp&quot;] = tx[&quot;article_id&quot;].map(grp)
+    tx = tx[tx[&quot;grp&quot;].isin([TOP, BOTTOM])]          # chỉ áo và quần (phụ kiện, váy... bị bỏ)
+    tx = tx.sort_values([&quot;customer_id&quot;, &quot;t_dat&quot;])
+    samples = []
+    for cid, g in tx.groupby(&quot;customer_id&quot;, sort=False):
+        seen = []                                   # các món đã mua ở những ngày trước
+        for day, b in g.groupby(&quot;t_dat&quot;, sort=True):
+            items = list(dict.fromkeys(b[&quot;article_id&quot;]))[:max_items]   # bỏ trùng, giữ thứ tự
+            grps = set(b[&quot;grp&quot;])
+            is_outfit = len(items) &gt;= min_items and TOP in grps and BOTTOM in grps
+            if is_outfit and seen:                  # cần có lịch sử để làm &quot;người dùng có sở thích&quot;
+                samples.append({&quot;customer_id&quot;: cid, &quot;date&quot;: day,
+                                &quot;history&quot;: seen[-hist_len:], &quot;outfit&quot;: items})
+            seen += [i for i in items if i not in seen]
+    return samples
+
+def time_split(samples, test_frac=0.1):
+    &quot;&quot;&quot;Chia theo thời gian (không xáo trộn) để không rò rỉ tương lai vào tập huấn luyện.&quot;&quot;&quot;
+    s = sorted(samples, key=lambda x: x[&quot;date&quot;])
+    k = int(len(s) * (1 - test_frac))
+    return s[:k], s[k:]</pre>
+  <p>Hàm làm ba việc: chỉ giữ áo và quần, coi giỏ hàng một ngày có cả áo lẫn quần (từ 2 món) là một outfit, và lấy các món mua ở những ngày trước làm lịch sử. Giỏ đầu tiên của mỗi người bị bỏ vì chưa có lịch sử. <code>time_split</code> chia theo thời gian, không xáo trộn, để mô hình không "nhìn thấy tương lai".</p>
+
+  <h3 style="margin-top:20px">Thứ tự làm</h3>
+  <ol>
+    <li>Tải <code>articles.csv</code>, <code>images/</code> và <code>transactions_train.csv</code> (file giao dịch nặng khoảng vài GB, nên đọc theo từng phần).</li>
+    <li><b>Chọn món từ giao dịch trước, rồi mới embed.</b> Đây là thay đổi so với <code>embed_hm.py</code> hiện tại đang lấy mẫu ngẫu nhiên 3000 món trong hơn 100 nghìn: với tập ngẫu nhiên nhỏ như vậy gần như không còn giỏ hàng nào đủ món để làm outfit. Cách đúng là chọn một nhóm người dùng hoạt động, giữ các món áo và quần họ mua, rồi embed đúng những món đó. Việc này chưa làm, cần thêm tùy chọn nhận danh sách <code>article_id</code> vào script.</li>
+    <li>Chạy <code>build_samples</code>, chia theo thời gian.</li>
+    <li>Kiểm tra số mẫu thu được. Nếu chỉ có vài nghìn mẫu thì mô hình Transformer khó học và nên giảm bớt kích thước mô hình, hoặc tăng số người dùng.</li>
+  </ol>
+
+  <h3 style="margin-top:20px">So sánh CLIP và FashionCLIP</h3>
+  <p>Chạy <code>embed_hm.py --model clip</code> và <code>--model fashion-clip</code> trên cùng danh sách món rồi đổi duy nhất bộ vector đầu vào của mô hình. Mọi thứ khác giữ nguyên nên chênh lệch kết quả chỉ do vector. Mỗi mô hình ghi vào thư mục riêng cùng một file <code>meta.json</code> lưu tên mô hình, số chiều, seed.</p>
+</section>
+
+<section id="model">
+  <h2>Mô hình</h2>
+  <p>Mô hình nhỏ: hidden 64 chiều, 6 lớp, 8 head. Nhiều khả năng huấn luyện được trên RTX 3050 4GB, nhưng tôi chưa chạy thử nên đây là dự đoán. Dưới đây là phác thảo bám theo bài báo.</p>
+  <div class="note"><b>Phác thảo chưa chạy thử.</b> Môi trường tôi dùng không có PyTorch nên tôi chỉ kiểm tra được cú pháp. Khi bạn đồng ý đi tiếp, tôi sẽ viết bản đầy đủ và chạy thử với dữ liệu giả trước khi đưa bạn.</div>
+<pre># PHÁC THẢO theo bài báo POG (chưa chạy thử). Kích thước lấy từ bài báo: d_e=128, d_m=64, 6 lớp, 8 head.
+import torch, torch.nn as nn
+
+class Transition(nn.Module):                      # 2 lớp FC, ReLU ở giữa (công thức 3 trong bài báo)
+    def __init__(self, d_e=128, d_m=64):
+        super().__init__()
+        self.f = nn.Sequential(nn.Linear(d_e, d_m), nn.ReLU(), nn.Linear(d_m, d_m))
+    def forward(self, x): return self.f(x)
+
+class FOM(nn.Module):                             # học &quot;món này hợp với các món còn lại&quot;
+    def __init__(self, d_e=128, d_m=64, layers=6, heads=8):
+        super().__init__()
+        self.trans = Transition(d_e, d_m)
+        self.mask_tok = nn.Parameter(torch.randn(d_e))        # vector [MASK]
+        layer = nn.TransformerEncoderLayer(d_m, heads, 4 * d_m, batch_first=True)
+        self.enc = nn.TransformerEncoder(layer, layers)       # KHÔNG thêm positional embedding: outfit là tập hợp
+
+def fom_loss(m, items, pad, mask_pos, negs):
+    &quot;&quot;&quot;items: B×n×d_e | pad: B×n (True = ô đệm) | mask_pos: B | negs: B×3×d_e (món ngẫu nhiên ngoài outfit)&quot;&quot;&quot;
+    B = items.size(0); ar = torch.arange(B)
+    target = items[ar, mask_pos]
+    x = items.clone(); x[ar, mask_pos] = m.mask_tok
+    g = m.enc(m.trans(x), src_key_padding_mask=pad)[ar, mask_pos]            # B×d_m
+    cand = m.trans(torch.cat([target.unsqueeze(1), negs], 1))                # B×4×d_m (đáp án đúng ở vị trí 0)
+    logits = (cand @ g.unsqueeze(-1)).squeeze(-1)                            # B×4
+    return nn.functional.cross_entropy(logits, torch.zeros(B, dtype=torch.long))
+
+class POG(nn.Module):
+    def __init__(self, d_e=128, d_m=64, p=6, q=6, heads=8):
+        super().__init__()
+        self.trans_u, self.trans_f = Transition(d_e, d_m), Transition(d_e, d_m)
+        self.per = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_m, heads, 4 * d_m, batch_first=True), p)
+        self.gen = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_m, heads, 4 * d_m, batch_first=True), q)
+        self.start = nn.Parameter(torch.randn(d_e)); self.end = nn.Parameter(torch.randn(d_e))
+    def forward(self, hist, hist_pad, outfit_in):
+        &quot;&quot;&quot;hist: B×m×d_e (lịch sử) | outfit_in: B×t×d_e, bắt đầu bằng [START]&quot;&quot;&quot;
+        C = self.per(self.trans_u(hist), src_key_padding_mask=hist_pad)      # tín hiệu sở thích
+        t = outfit_in.size(1)
+        causal = torch.triu(torch.ones(t, t, dtype=torch.bool), 1)          # mỗi bước chỉ nhìn các món trước nó
+        return self.gen(self.trans_f(outfit_in), C, tgt_mask=causal, memory_key_padding_mask=hist_pad)  # B×t×d_m</pre>
+  <ul>
+    <li><b>Token [START] và [END]:</b> hai vector học được. Decoder bắt đầu từ [START], và nếu [END] được chọn thì dừng. Khi huấn luyện, [END] nằm sau món cuối của outfit.</li>
+    <li><b>Khởi tạo Gen từ FOM:</b> bài báo nói khởi tạo, nhưng không mô tả chi tiết cách chép trọng số, và còn cho biết bản có FOM chỉ nhỉnh hơn một chút. Đây là phần có thể bỏ nếu tiến độ trễ.</li>
+    <li><b>Positional embedding ở decoder:</b> bài báo nói rõ FOM không dùng, nhưng không nói rõ cho decoder. Nếu bạn dùng thì ghi lại là lựa chọn của mình.</li>
+  </ul>
+</section>
+
+<section id="infer">
+  <h2>Sinh outfit khi người dùng mở session</h2>
+  <ol>
+    <li>Lấy lịch sử người dùng, tối đa 50 món, đưa qua Per network ra tín hiệu sở thích.</li>
+    <li>Đưa [START] vào decoder, nhận một vector. Tìm trong tập ứng viên món có điểm cao nhất, chỉ trong những loại món luật cho phép (sau áo thì tìm quần).</li>
+    <li>Đưa món vừa chọn vào decoder, lặp lại cho tới khi [END] có điểm cao nhất hoặc đủ số món.</li>
+    <li>Với mỗi món, tra bảng size, rồi tra catalog 3D để thử lên avatar.</li>
+  </ol>
+  <h3 style="margin-top:18px">Người dùng mới chưa có lịch sử</h3>
+  <p>Bài báo tự nhận cold-start là việc để làm sau. Với demo của bạn, có hai cách: chọn một khách hàng H&amp;M có sẵn lịch sử, hoặc cho người dùng chọn 3 đến 5 món họ thích rồi coi đó là lịch sử. Cách thứ hai khớp với luồng "một session" bạn muốn, nhưng chất lượng với lịch sử ngắn như vậy chưa được kiểm chứng, nên cần đo riêng.</p>
+  <h3 style="margin-top:18px">Phần mở rộng của bạn (không có trong bài báo)</h3>
+  <div class="scroll"><table>
+    <tr><th>Mở rộng</th><th>Cách gắn vào POG</th><th>Kiểm chứng được không</th></tr>
+    <tr><td>Tủ đồ</td><td>Đưa các món người dùng đã có vào đầu chuỗi của decoder (tiền tố), để nó sinh tiếp phần còn lại. Hoặc chỉ cho phép ứng viên là món trong tủ đồ</td><td>Cần dữ liệu tủ đồ để đánh giá. H&amp;M chỉ cho "đã mua" nên chỉ mô phỏng gần đúng</td></tr>
+    <tr><td>Số đo và size</td><td>Lọc ứng viên theo size còn vừa, hoặc xếp lại sau khi POG sinh. Làm ngoài mô hình, bằng luật so số đo với bảng size</td><td>H&amp;M không có số đo cơ thể, nên không chứng minh được bằng số liệu. Ghi là hạn chế</td></tr>
+    <tr><td>Dịp sử dụng</td><td>Thêm điều kiện lọc hoặc một token điều kiện</td><td>Không có nhãn dịp trong H&amp;M</td></tr>
+  </table></div>
+</section>
+
+<section id="eval">
+  <h2>Đánh giá</h2>
+  <h3>Offline, trên tập kiểm tra chia theo thời gian</h3>
+  <ul>
+    <li><b>FITB:</b> che một món trong outfit thật, đưa đáp án đúng cùng 3 món ngẫu nhiên, đo tỉ lệ chọn đúng (đoán bừa được 25%).</li>
+    <li><b>CP:</b> phân biệt outfit thật với outfit ghép ngẫu nhiên, đo AUC.</li>
+    <li><b>Hit, Recall, NDCG @K:</b> với lịch sử của người dùng, mô hình sinh outfit hoặc xếp hạng ứng viên theo từng loại món, so với giỏ hàng thật ở lần mua kế tiếp. K = 5 và 10 như tài liệu dự án.</li>
+  </ul>
+  <h3 style="margin-top:16px">Các cấu hình để so sánh</h3>
+  <div class="scroll"><table>
+    <tr><th>Cấu hình</th><th>Mô tả</th><th>Ứng với thí nghiệm trong tài liệu</th></tr>
+    <tr><td>Phổ biến nhất</td><td>Gợi ý món bán chạy theo loại</td><td>Mốc tối thiểu</td></tr>
+    <tr><td>CLIP / FashionCLIP truy xuất</td><td>Vector trung bình của lịch sử, tìm món gần nhất</td><td>A và B (baseline và có sở thích)</td></tr>
+    <tr><td>CF theo món</td><td>Item-based CF như bài báo dùng</td><td>Baseline sở thích kinh điển</td></tr>
+    <tr><td>Gen không có người dùng</td><td>Chỉ sinh outfit tương thích</td><td>D một phần (tương thích)</td></tr>
+    <tr><td>POG</td><td>Per + Gen</td><td>D (tương thích và cá nhân hóa)</td></tr>
+    <tr><td>POG + FOM</td><td>Gen khởi tạo từ FOM</td><td>D đầy đủ</td></tr>
+  </table></div>
+  <p>Thí nghiệm C (số đo và dịp sử dụng) không có chỗ trong bảng này vì POG và H&amp;M đều không có dữ liệu cho nó.</p>
+  <div class="note"><b>Quy tắc trung thực.</b> Chạy mỗi cấu hình với nhiều seed và báo cáo trung bình, không chọn lần chạy tốt nhất. Nếu POG không thắng baseline đơn giản trên dữ liệu của bạn thì đó vẫn là một kết quả hợp lệ, và tài liệu của bạn cũng dặn không khẳng định trước rằng hệ thống chắc chắn tốt hơn. Chỉ số CTR trực tuyến trong bài báo thì bạn không có cách nào đo.</div>
+</section>
+
+<section id="plan">
+  <h2>Lộ trình đề xuất</h2>
+  <p>Tài liệu dự án xếp "tương thích outfit" ở mức <b>P1</b>, sau phần P0 (CLIP, baseline, cá nhân hóa, đánh giá). Vì thời gian chỉ khoảng ba tháng và bạn vừa làm vừa học ML, tôi đề xuất giữ đúng thứ tự đó.</p>
+  <ol>
+    <li><b>P0 trước:</b> embedding bằng CLIP và FashionCLIP, baseline truy xuất, cá nhân hóa bằng lịch sử, đánh giá. Đây đã là một kết quả hoàn chỉnh.</li>
+    <li>Chọn món từ giao dịch, chạy <code>build_samples</code>, xem số mẫu thu được.</li>
+    <li>Huấn luyện FOM trước (nhỏ, dễ kiểm tra bằng FITB), rồi mới đến POG.</li>
+    <li>Nếu trễ tiến độ, cắt POG xuống chỉ còn FOM cộng luật top → bottom, và cắt trước phần 3D hoặc VTON giống như quy tắc ưu tiên trong tài liệu, không cắt phần đánh giá.</li>
+  </ol>
+</section>
+
+</main>
+<footer><div class="wrap">Nội dung về POG lấy từ chính bài báo arXiv 1905.01866. Thông tin về repo dataset POG lấy từ trang GitHub wenyuer/POG. Các phần còn lại là đề xuất áp dụng của tôi.</div></footer>
+
+<script>
+(function(){
+  var b=document.getElementById('theme'),r=document.documentElement;
+  b.addEventListener('click',function(){
+    var dark=r.getAttribute('data-theme')==='dark'||(r.getAttribute('data-theme')!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);
+    r.setAttribute('data-theme',dark?'light':'dark');
+  });
+})();
+
+/* ---------- stepper: minh họa Algorithm 1 (số liệu tự đặt) ---------- */
+(function(){
+  var S=[
+    {name:'Người dùng A',hist:['black t-shirt','black jeans','grey hoodie','dark denim jacket'],
+     steps:[
+      {rule:'áo',c:[['black hoodie',.46],['white t-shirt',.21],['striped shirt',.12]]},
+      {rule:'quần',c:[['dark grey trousers',.52],['blue jeans',.25],['beige trousers',.09]]},
+      {rule:'dừng?',c:[['[END]',.71],['thêm một món',.29]]}]},
+    {name:'Người dùng B',hist:['white shirt','beige trousers','light blue shirt','cream chinos'],
+     steps:[
+      {rule:'áo',c:[['white linen shirt',.38],['light blue shirt',.30],['pale pink blouse',.09]]},
+      {rule:'quần',c:[['beige chinos',.49],['white trousers',.22],['blue jeans',.12]]},
+      {rule:'dừng?',c:[['[END]',.66],['thêm một món',.34]]}]}
+  ];
+  var scen=document.getElementById('scen'),hist=document.getElementById('hist'),
+      next=document.getElementById('next'),reset=document.getElementById('reset'),
+      outfit=document.getElementById('outfit'),trace=document.getElementById('trace');
+  var cur=0,step=0;
+  function el(t,c,tx){var e=document.createElement(t);if(c)e.className=c;if(tx!=null)e.textContent=tx;return e}
+  function render(){
+    var sc=S[cur];
+    Array.prototype.forEach.call(scen.children,function(b,i){b.setAttribute('aria-pressed',i===cur?'true':'false')});
+    hist.innerHTML='';sc.hist.forEach(function(h){hist.appendChild(el('span','pill',h))});
+    trace.innerHTML='';outfit.innerHTML='';
+    var li0=el('li',step===0?'cur':'');
+    li0.appendChild(el('b','','Bước 0: Per network đọc lịch sử'));
+    li0.appendChild(el('div','',step===0?'Chưa bắt đầu. Bấm "Bước tiếp".':'Lịch sử được mã hóa thành tín hiệu sở thích C, dùng ở mọi bước sau.'));
+    trace.appendChild(li0);
+    var finished=false;
+    for(var i=0;i<sc.steps.length;i++){
+      if(i>=step)break;
+      var st=sc.steps[i],li=el('li',i===step-1?'cur':'');
+      var title=i===0?'[START] vào decoder':(st.rule==='dừng?'?'Đưa món cuối vào decoder':'Đưa món vừa chọn vào decoder');
+      li.appendChild(el('b','','Bước '+(i+1)+': '+title+' ('+(st.rule==='dừng?'?'đã đủ chưa?':'luật: tìm '+st.rule)+')'));
+      var ul=el('ul','cands');
+      st.c.forEach(function(c,k){var x=el('li',k===0?'win':'');x.appendChild(el('span','',c[0]));x.appendChild(el('span','mono',c[1].toFixed(2)));ul.appendChild(x)});
+      li.appendChild(ul);trace.appendChild(li);
+      if(st.c[0][0]==='[END]'){outfit.appendChild(el('span','piece end','[END]'));finished=true}
+      else outfit.appendChild(el('span','piece',st.c[0][0]));
+    }
+    if(!finished&&step===0)outfit.appendChild(el('span','piece end','(chưa có món nào)'));
+    next.disabled=step>=sc.steps.length;
+    next.textContent=next.disabled?'Đã xong':'Bước tiếp';
+  }
+  S.forEach(function(s,i){
+    var b=el('button','btn',s.name);b.type='button';b.setAttribute('aria-pressed','false');
+    b.addEventListener('click',function(){cur=i;step=0;render()});scen.appendChild(b);
+  });
+  next.addEventListener('click',function(){if(step<S[cur].steps.length){step++;render()}});
+  reset.addEventListener('click',function(){step=0;render()});
+  render();
+})();
+</script>
+</body>
+</html>

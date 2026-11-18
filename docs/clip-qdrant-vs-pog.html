@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>CLIP + Qdrant khác POG thế nào? — Fashion Suggest</title>
+<style>
+:root{--bg:#f7f6f2;--paper:#fff;--text:#222b32;--muted:#53606a;--line:#d6dcd9;--accent:#246655;--soft:#e8f1ec;--code:#edf0ef;--warn:#784817;--warnbg:#fff0d8;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#121917;--paper:#1b2521;--text:#e5eee8;--muted:#b0c1b7;--line:#3a4c43;--accent:#8cd6b5;--soft:#263f32;--code:#26332d;--warn:#f2c180;--warnbg:#3c2d19;color-scheme:dark}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:18px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1080px;margin:auto;padding:40px 24px 70px}header{padding-bottom:28px;border-bottom:1px solid var(--line)}h1{font-size:clamp(1.9rem,5vw,3rem);line-height:1.15;max-width:23ch;margin:8px 0 20px}h2{font-size:1.55rem;line-height:1.3;margin:0 0 18px}h3{font-size:1.1rem;margin:18px 0 8px}p{margin:0 0 14px;max-width:85ch}a{color:var(--accent);text-underline-offset:3px}section{padding-top:44px}nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:24px}.eyebrow,.muted{color:var(--muted)}.eyebrow{text-transform:uppercase;font-size:.8rem;letter-spacing:.1em}.lead{font-size:1.15rem;max-width:74ch}.note{background:var(--soft);padding:18px 22px;border-left:4px solid var(--accent);margin:18px 0}.warning{background:var(--warnbg);color:var(--warn);padding:15px 20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.panel{background:var(--paper);border:1px solid var(--line);padding:20px;border-radius:12px}.panel h3:first-child{margin-top:0}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0}.node{background:var(--code);padding:8px 12px;border-radius:6px}.arrow{color:var(--muted)}code{font:0.9em ui-monospace,Consolas,monospace;overflow-wrap:anywhere;background:var(--code);padding:2px 5px;border-radius:4px}pre{white-space:pre-wrap;background:var(--code);padding:18px;overflow-wrap:anywhere;font:0.9em/1.8 ui-monospace,Consolas,monospace}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:600px;text-align:left}th,td{padding:12px 14px;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--code)}ul,ol{padding-left:24px}li{margin-bottom:8px}button,select{font:inherit;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);padding:9px 14px}button{cursor:pointer}button:hover{background:var(--soft)}button.primary{background:var(--accent);color:var(--bg)}button:disabled{cursor:default;opacity:.55}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.demo{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px}.demo svg{display:block;width:100%;height:auto}.axis{stroke:var(--line);stroke-width:1}.point{fill:var(--muted)}.query{fill:var(--accent)}.query-line{stroke:var(--accent);stroke-width:3}.label{fill:var(--text);font:13px system-ui,sans-serif}.small-label{fill:var(--muted);font:12px system-ui,sans-serif}.readout{font-variant-numeric:tabular-nums}.meter{height:8px;background:var(--code);margin-top:6px;border-radius:4px;overflow:hidden}.meter span{display:block;height:100%;background:var(--accent)}.ranking{list-style:none;padding:0}.ranking li{padding:10px 0;border-bottom:1px solid var(--line)}.caption{font-size:.9rem;color:var(--muted)}.outfit{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.outfit span{padding:12px 16px;background:var(--soft);border-radius:6px}.feedback-form{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}.feedback-form label{display:block;margin-bottom:10px}.feedback-form select{width:100%;max-width:560px}output{display:block;white-space:pre-line;margin-top:14px}footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted)}[hidden]{display:none!important}@media(max-width:720px){main{padding:24px 16px 50px}.grid{grid-template-columns:1fr}section{padding-top:32px}.demo,.panel{padding:16px}}@media print{body{background:white;color:black}nav,.actions,.feedback-form,button{display:none!important}main{max-width:none;padding:0}section{break-inside:avoid}.panel,.demo{border-color:#aaa}a{color:inherit}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">Fashion Suggest · Group 10 · Giải thích ngày 18/11/2026</div>
+<h1>CLIP + Qdrant khác POG ở đâu?</h1>
+<p class="lead">Một hướng bắt đầu từ việc tìm món hợp sở thích rồi ghép outfit bằng logic do nhóm xây dựng. Hướng còn lại bổ sung mô hình học cách phối cả bộ từ dữ liệu outfit và tương tác người dùng.</p>
+<p>Trang này cũng giải thích dữ liệu JWT/MySQL lưu ở đâu và ghi lại quyết định: <strong>dislike cả bộ → hỏi lý do → xác nhận → mới thay đổi gợi ý</strong>.</p>
+<nav aria-label="Mục lục"><a href="#storage">JWT và database</a><a href="#methods">Hai hướng gợi ý</a><a href="#difference">So sánh</a><a href="#vector-demo">Thử cập nhật vector</a><a href="#feedback">Luồng dislike</a><a href="#plan">Áp dụng vào project</a><a href="#sources">Nguồn</a></nav>
+</header>
+
+<section id="storage">
+<h2>1. Có JWT rồi, tài khoản được lưu ở đâu?</h2>
+<p><strong>Repo đã có cấu hình database MySQL.</strong> Chưa viết file SQL thủ công không có nghĩa chưa có database: <code>User</code> là entity, <code>UserRepository</code> dùng JPA, và <code>ddl-auto: update</code> cho Hibernate tạo/cập nhật bảng khi kết nối được MySQL. Bản thân schema/database MySQL vẫn phải tồn tại hoặc được container khởi tạo.</p>
+<div class="flow" aria-label="Luồng đăng ký"><span class="node">Email + mật khẩu</span><span class="arrow">→</span><span class="node">Backend băm mật khẩu</span><span class="arrow">→</span><span class="node">users.save → MySQL</span><span class="arrow">→</span><span class="node">Ký JWT → trình duyệt</span></div>
+<p>JWT là một “vé xác thực” có chữ ký và thời hạn. Trong code hiện tại, token có email, user ID và thời điểm hết hạn; không chứa mật khẩu. Backend không lưu danh sách JWT đã cấp vào database. Khi kiểm tra token, bộ lọc vẫn tra user trong MySQL, nên auth hiện tại vẫn cần database.</p>
+<div class="table-wrap"><table><caption>Dữ liệu và thời gian tồn tại theo cấu hình hiện tại</caption><thead><tr><th>Dữ liệu</th><th>Nằm ở đâu?</th><th>Tắt ứng dụng thì sao?</th></tr></thead><tbody>
+<tr><td>Tài khoản, mật khẩu đã băm, outfit đã lưu</td><td>MySQL; Compose gắn <code>mysql_data:/var/lib/mysql</code></td><td>Vẫn còn nếu dữ liệu đã ghi thành công và volume được giữ.</td></tr>
+<tr><td>JWT</td><td><code>localStorage</code> của trình duyệt</td><td>Thường vẫn còn khi đóng tab/trình duyệt; có thể bị xóa bởi người dùng, chế độ riêng tư hoặc chính sách trình duyệt. Token vẫn hết hạn sau 24 giờ theo mặc định.</td></tr>
+<tr><td>Catalog vector</td><td>Qdrant, volume <code>qdrant_data</code>; seed còn ở thư mục repo</td><td>Dữ liệu Qdrant vẫn còn nếu giữ volume; seed là file trên ổ đĩa.</td></tr>
+<tr><td>Model CLIP đang được nạp</td><td>Bộ nhớ process AI; cache trọng số là chuyện riêng</td><td>Bộ nhớ được giải phóng; lần chạy sau nạp lại model.</td></tr>
+<tr><td>Feedback, sở thích dài hạn</td><td>Chưa có phần xử lý/lưu hoàn chỉnh</td><td>Chưa có dữ liệu này để khẳng định giữ lại. Phải triển khai lưu MySQL.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Tắt code không xóa tài khoản.</strong> Dừng backend, dừng container hoặc <code>docker compose down</code> thông thường giữ named volume. <code>docker compose down -v</code> xóa volume của stack nên có thể làm mất dữ liệu database. Đây là giải thích tác dụng lệnh, không phải hướng dẫn chạy lệnh xóa.</div>
+<p>Restart backend với cùng JWT secret: token còn hạn có thể tiếp tục được xác minh. Đổi secret làm token cũ không còn hợp lệ; tài khoản trong MySQL vẫn còn. Token hết hạn thì đăng nhập lại. Nếu MySQL không chạy/kết nối sai, backend hiện không có cơ chế tự chuyển sang lưu user trong RAM; quá trình khởi động hoặc thao tác auth sẽ lỗi.</p>
+<p class="caption">Đối chiếu source: backend/application.yml, AuthController, User, UserRepository, JwtService, JwtAuthFilter, frontend/app/login/page.tsx và docker-compose.yml. Chưa xác nhận container hoặc tài khoản thực tế đang tồn tại trên máy.</p>
+</section>
+
+<section id="methods">
+<h2>2. Tách ba khái niệm trước khi so sánh</h2>
+<div class="grid"><div class="panel"><h3>Biểu diễn và tìm kiếm</h3><p><strong>CLIP</strong> đưa ảnh và văn bản vào không gian vector chung để so khớp. <strong>Qdrant</strong> lưu vector, metadata và tìm ứng viên gần vector truy vấn, kèm bộ lọc. <a href="https://github.com/openai/CLIP">Nguồn CLIP</a> · <a href="https://qdrant.tech/documentation/concepts/search/">Nguồn Qdrant</a>.</p><p>Ví dụ: câu “áo trắng đơn giản đi học” giúp tìm các ảnh liên quan. Qdrant không tự quyết định một chiếc áo và một chiếc quần phối đẹp.</p></div>
+<div class="panel"><h3>Phù hợp sở thích và hợp nhau</h3><p><strong>Phù hợp sở thích:</strong> người dùng thích màu tối, dáng rộng.</p><p><strong>Hợp nhau:</strong> áo và quần tạo một tổng thể phù hợp về kiểu dáng, màu, dịp mặc.</p><p>Mỗi món đều đúng gu chưa đảm bảo cả bộ hợp nhau. Ví dụ người dùng thích cả đồ thể thao lẫn đồ công sở, nhưng không phải mọi cặp lấy từ hai nhóm đều hợp cho buổi phỏng vấn.</p></div></div>
+<h3>Hướng A — CLIP + Qdrant + cập nhật vector</h3>
+<div class="flow"><span class="node">Onboarding + profile đã lưu</span><span class="arrow">→</span><span class="node">Vector truy vấn</span><span class="arrow">→</span><span class="node">Tìm áo / quần / đầm</span><span class="arrow">→</span><span class="node">Luật ghép + xếp hạng</span><span class="arrow">→</span><span class="node">Outfit</span></div>
+<p>Đây là phương án đề xuất cho repo hiện tại: dùng CLIP đã huấn luyện sẵn, tìm ứng viên theo từng slot rồi ghép bộ. Like/dislike và câu trả lời bổ sung làm thay đổi truy vấn/bộ lọc. Nhóm phải xây phần ghép đồ và kiểm chứng chất lượng; chưa có các phần đó trong source.</p>
+<p><strong>“Cập nhật vector” khác “huấn luyện lại CLIP”.</strong> Ta thay con số đại diện sở thích của một người dùng; trọng số CLIP có thể giữ nguyên. Tính lại embedding cho một câu mới cũng không phải huấn luyện model.</p>
+<h3>Hướng B — POG</h3>
+<p>POG dùng Transformer: <strong>Per</strong> đọc lịch sử tương tác; <strong>Gen</strong> chọn món tiếp theo dựa vào sở thích và các món đã chọn. <strong>FOM</strong> học quan hệ trong outfit bằng bài toán đoán món bị che. Cần dữ liệu outfit và hành vi để huấn luyện. Bài gốc thừa nhận chưa cá nhân hóa được cho user không có lịch sử. “Generation” ở đây là chọn món từ catalog, không phải sinh pixel ảnh. <a href="https://arxiv.org/html/1905.01866v1">Bài POG, mục 4 và 5.2.3</a>.</p>
+<p>Tác giả công bố định dạng dữ liệu gồm outfit → item, user → lịch sử item/outfit và metadata item. Repo công bố chủ yếu mô tả dataset, không phải một bộ model hoàn chỉnh có thể ghép thẳng vào dự án này. <a href="https://github.com/wenyuer/POG">Repo tác giả</a>.</p>
+</section>
+
+<section id="difference">
+<h2>3. Khác biệt nào ảnh hưởng đến project của bạn?</h2>
+<p>Bảng dưới là <strong>đánh giá áp dụng cho repo hiện tại</strong>, dựa trên dữ liệu đã có và cơ chế POG ở trên; không phải kết quả thực nghiệm hai hệ thống.</p>
+<div class="table-wrap"><table><thead><tr><th>Câu hỏi</th><th>Hướng CLIP hiện đề xuất</th><th>Nếu chuyển sang POG</th></tr></thead><tbody>
+<tr><td>Bắt đầu từ đâu?</td><td>Tận dụng seed 20.000 món và bộ encoder hiện có.</td><td>Cần bổ sung pipeline dữ liệu, model, training và đánh giá.</td></tr>
+<tr><td>Người mới có dùng được?</td><td>Dùng câu trả lời onboarding làm điểm xuất phát.</td><td>Cần thiết kế thêm onboarding/fallback; xem giới hạn cold-start của bài gốc phía trên.</td></tr>
+<tr><td>Dữ liệu đang thiếu gì?</td><td>Contract sở thích, feedback, quy tắc ghép và tiêu chí đánh giá.</td><td>Ngoài các phần ứng dụng chung, còn thiếu mẫu outfit và tương tác phù hợp để huấn luyện.</td></tr>
+<tr><td>Vì sao hai món được ghép?</td><td>Ban đầu do luật và điểm do nhóm thiết kế; phải công khai giới hạn.</td><td>Phần model học phối đồ thay đổi cách nhóm xây và kiểm chứng bộ ghép.</td></tr>
+<tr><td>Có lưu sở thích lâu dài được không?</td><td>Có, nếu lưu profile/vector và feedback trong MySQL.</td><td>Vẫn phải xây backend lưu dữ liệu; đổi model không thay việc này.</td></tr>
+<tr><td>Ra ảnh giống sample.jpg?</td><td>Cần ảnh phù hợp + bố trí collage.</td><td>Vẫn cần asset và phần hiển thị collage riêng.</td></tr>
+<tr><td>Qdrant có bị bỏ đi không?</td><td>Dùng để tìm ứng viên.</td><td>Có thể vẫn dùng ở tầng truy xuất nếu thiết kế không gian vector tương thích; không dùng lẫn tùy tiện các loại embedding.</td></tr>
+<tr><td>Chất lượng chắc chắn tốt hơn?</td><td>Chưa có kết quả đo.</td><td>Cũng chưa có kết quả trên dữ liệu của nhóm; độ phức tạp không đảm bảo chất lượng.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Đề xuất:</strong> làm baseline CLIP trước để hoàn thành luồng sản phẩm và thu feedback thật. Sau khi có dữ liệu outfit và bộ đánh giá, thử thêm model học tương thích. CLIP, vector database và một model phối đồ có thể nằm cùng hệ thống; chúng giải quyết những phần khác nhau.</div>
+<p>Đây là đề xuất dựa trên source và phạm vi áo + quần hoặc đầm bạn đã chốt, không phải kết luận rằng một thuật toán luôn tốt hơn thuật toán khác.</p>
+</section>
+
+<section id="vector-demo">
+<h2>4. Thử xem “cập nhật vector sở thích” làm gì</h2>
+<p>Ví dụ giả lập 2 chiều: các chấm là ứng viên áo. Bấm like/dislike áo B để xem hướng truy vấn và thứ hạng thay đổi. Thực tế repo dùng 512 chiều, không có các trục mang nghĩa đơn giản như hình này.</p>
+<div class="demo">
+<p class="caption"><strong>Mô phỏng toán học, không chạy CLIP/Qdrant.</strong> Tên món, tọa độ và hệ số đều do người viết đặt để giải thích. Không thể suy ra chất lượng gợi ý từ ví dụ này.</p>
+<div class="grid"><div>
+<svg viewBox="0 0 390 300" role="img" aria-labelledby="plot-title plot-desc">
+<title id="plot-title">Vector truy vấn và bốn ứng viên giả lập</title><desc id="plot-desc">Vector truy vấn bắt đầu ở góc 45 độ. Like áo B kéo vector về B; dislike đẩy vector xa B.</desc>
+<line class="axis" x1="40" y1="250" x2="360" y2="250"/><line class="axis" x1="40" y1="250" x2="40" y2="20"/>
+<text class="small-label" x="290" y="275">Chiều 1</text><text class="small-label" x="45" y="18">Chiều 2</text>
+<line id="query-line" class="query-line" x1="40" y1="250" x2="188.5" y2="101.5"/><circle id="query-dot" class="query" cx="188.5" cy="101.5" r="7"/>
+<text id="query-label" class="label" x="200" y="100">q</text>
+<circle class="point" cx="80" cy="53.9" r="5"/><text class="label" x="90" y="54">A</text>
+<circle class="point" cx="236.1" cy="210" r="5"/><text class="label" x="246" y="214">B</text>
+<circle class="point" cx="181.4" cy="108.6" r="5"/><text class="label" x="166" y="96">C</text>
+<circle class="point" cx="218.9" cy="160.6" r="5"/><text class="label" x="229" y="160">D</text>
+</svg>
+<p id="vector-value" class="readout"></p>
+</div><div><h3>Thứ hạng theo cosine</h3><ol id="ranking" class="ranking readout"></ol></div></div>
+<div class="actions"><button id="like-b" type="button">Like áo B</button><button id="dislike-b" type="button">Dislike áo B</button><button id="reset-vector" type="button">Về ban đầu</button></div>
+<p id="vector-explanation" aria-live="polite"></p>
+<pre>q_mới = normalize(q_gốc + 0,8 × vector_like − 0,4 × vector_dislike)</pre>
+<p class="caption">Mỗi nút minh họa một trường hợp riêng tính từ q_gốc, không cộng dồn. Giữ B trong bảng để thấy điểm đổi; sản phẩm thật có thể loại món đã xem/từ chối. Công thức nhiều phản hồi thường dùng trung bình các vector. Khi vector tổng gần 0 cần fallback, không chia cho 0.</p>
+</div>
+<h3>Có cần chạy lại build_dataset.py sau mỗi lượt like?</h3>
+<p><strong>Không.</strong> Vector món đồ đã có trong seed/Qdrant. Một lượt feedback chủ yếu thay profile/truy vấn của user, rồi truy xuất lại. Tạo seed lại chỉ cần khi đổi catalog hoặc đổi model embedding theo một kế hoạch đồng bộ.</p>
+</section>
+
+<section id="feedback">
+<h2>5. Dislike cả bộ: hỏi trước khi thay đổi</h2>
+<p><strong>Quyết định đã ghi nhận:</strong> khi dislike outfit, giữ nguyên bộ đang hiển thị, hỏi phần chưa phù hợp và chỉ cập nhật sau khi user xác nhận. Dislike toàn bộ không tự biến thành tín hiệu âm cho mọi món.</p>
+<div class="flow"><span class="node">Đang xem outfit</span><span class="arrow">→</span><span class="node">Dislike</span><span class="arrow">→</span><span class="node">Hỏi lý do / món cần đổi</span><span class="arrow">→</span><span class="node">User xác nhận</span><span class="arrow">→</span><span class="node">Lưu feedback + tạo gợi ý mới</span></div>
+<div class="demo">
+<p class="caption">Mô phỏng luồng tương tác; không lưu dữ liệu thật và không gọi model.</p>
+<div id="outfit-display" class="outfit" aria-live="polite"><span>Áo sơ mi trắng</span><span>Quần đen</span></div>
+<button id="open-feedback" type="button" aria-expanded="false" aria-controls="feedback-form">Dislike bộ này</button>
+<form id="feedback-form" class="feedback-form" hidden>
+<label for="reason">Điều gì chưa phù hợp?</label>
+<select id="reason" name="reason" required><option value="">Chọn lý do trước khi xác nhận</option><option value="top">Không thích kiểu áo; giữ quần</option><option value="bottom">Không thích kiểu quần; giữ áo</option><option value="pair">Từng món ổn nhưng phối với nhau chưa hợp</option><option value="occasion">Bộ này quá trang trọng cho hôm nay</option></select>
+<div class="actions"><button class="primary" type="submit">Xác nhận và đổi gợi ý</button><button id="cancel-feedback" type="button">Hủy, giữ bộ hiện tại</button></div>
+</form>
+<output id="feedback-result" aria-live="polite">Bộ đồ giữ nguyên cho tới khi bạn xác nhận lý do.</output>
+<button id="reset-feedback" type="button" hidden>Thử lại ví dụ</button>
+</div>
+<h3>Ghi vào bộ nhớ nào?</h3>
+<ul><li><strong>Không thích kiểu áo:</strong> lưu feedback có phạm vi item/slot áo; giữ các món đã xác nhận thích.</li><li><strong>Không hợp cách phối:</strong> ghi nhận vấn đề ở tổ hợp, không suy ra user ghét từng item.</li><li><strong>Không hợp dịp hôm nay:</strong> điều chỉnh ngữ cảnh phiên, không lập tức đổi sở thích dài hạn.</li><li><strong>Sở thích lâu dài:</strong> lưu bền vững trong MySQL; nên cho user phân biệt “chỉ lần này” và “thường không thích”, rồi mới áp dụng lâu dài.</li></ul>
+<p>Like từng món, like cả bộ và xác nhận lưu outfit cũng cần có ý nghĩa riêng. Lưu một outfit là lưu một bộ đã chọn; học sở thích là cập nhật profile từ phản hồi. Có thể làm cả hai, nhưng phải thiết kế rõ để không cập nhật hai lần cho cùng một hành động.</p>
+</section>
+
+<section id="plan">
+<h2>6. Áp dụng vào repo hiện tại</h2>
+<p><strong>Đã có:</strong> CLIP loader/text embedding, seed 20.000 vector, script nạp Qdrant, auth và history. <strong>Chưa có:</strong> API recommendation/profile/feedback, logic ghép outfit và lưu sở thích dài hạn. Các thao tác trên trang này chỉ để giải thích.</p>
+<ol><li>Xác minh MySQL/Qdrant; sửa bảo vệ <code>/api/auth/me</code> và gắn Bearer token ở frontend.</li><li>Làm item metadata/URL ảnh; ánh xạ category thành slot áo/quần/đầm.</li><li>Viết retrieval theo slot và baseline ghép outfit; đo chất lượng trước khi thêm nhiều thuật toán.</li><li>Thêm dữ liệu profile, session, feedback và outfit item; lưu phạm vi feedback, lý do, ngữ cảnh và phiên bản model. Đây là thiết kế đề xuất, chưa phải schema có sẵn.</li><li>Khi dislike cả bộ, hỏi lý do; chỉ khi xác nhận mới ghi phản hồi có tác dụng học và tạo gợi ý thay thế. Có thể ghi một event “mở câu hỏi” riêng nhưng không coi đó là đã ghét mọi món.</li><li>Kiểm tra profile còn sau restart/đăng nhập lại; so sánh không feedback với có feedback qua nhiều vòng. Chỉ khẳng định cải thiện khi có kết quả đo.</li></ol>
+<p>Để đạt hình thức sample.jpg còn cần ảnh crop/tách nền phù hợp và phần bố trí collage. Đổi thuật toán recommendation không tự giải quyết chất lượng ảnh hoặc dữ liệu giày/phụ kiện còn thiếu. Bản đầu vẫn giữ phạm vi áo + quần hoặc đầm.</p>
+</section>
+
+<section id="sources">
+<h2>7. Nguồn và cách đọc các kết luận</h2>
+<ul><li><a href="https://arxiv.org/html/1905.01866v1">POG: Personalized Outfit Generation for Fashion Recommendation at Alibaba iFashion</a> — cơ chế model: mục 4; giới hạn cold-start: mục 5.2.3. Mô tả học thuật ở mục 2 dựa trên bài gốc; phần đề xuất triển khai là đánh giá riêng cho repo.</li><li><a href="https://github.com/wenyuer/POG">Repository dataset của tác giả POG</a> — định dạng outfit/user/item. Chưa xác minh dữ liệu và URL ảnh tải được đầy đủ.</li><li><a href="https://github.com/openai/CLIP">CLIP — mã và mô tả chính thức</a> — biểu diễn ảnh/văn bản và so khớp.</li><li><a href="https://qdrant.tech/documentation/concepts/search/">Qdrant — Search</a> — truy xuất vector.</li><li>Source local: <code>backend/src/main/resources/application.yml</code>, <code>backend/src/main/java/com/group10/fashion/</code>, <code>frontend/app/login/page.tsx</code>, <code>ai-service/app/</code>, <code>ai-service/scripts/</code>, <code>docker-compose.yml</code> và <code>seed/meta.json</code>.</li><li><a href="Midterm_Report_Group10.pdf">Midterm</a> · <a href="Proposal_Group%2010.pdf">Proposal</a> · <a href="../README.md">README cập nhật</a>.</li></ul>
+<p class="caption">Không đưa số liệu benchmark POG vào ví dụ project: chưa huấn luyện/chạy POG trên dữ liệu nhóm. Trang hoạt động offline bằng HTML/CSS/JavaScript có sẵn; liên kết nguồn cần mạng.</p>
+</section>
+<footer>Fashion Suggest · Tài liệu giải thích và mô phỏng, không phải chức năng production.</footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const norm = v => { const n = Math.hypot(...v); return n > 1e-9 ? v.map(x => x / n) : [Math.SQRT1_2, Math.SQRT1_2]; };
+  const base = norm([1, 1]);
+  const items = [{id:'A',name:'Áo A',v:norm([0.2,0.98])},{id:'B',name:'Áo B',v:norm([0.98,0.2])},{id:'C',name:'Áo C',v:norm([1,1])},{id:'D',name:'Áo D',v:norm([0.9,0.45])}];
+  const byId = id => document.getElementById(id);
+  function renderVector(mode) {
+    const weight = mode === 'like' ? 0.8 : mode === 'dislike' ? -0.4 : 0;
+    const q = norm(base.map((x,i) => x + weight * items[1].v[i]));
+    const x = 40 + q[0]*210, y = 250 - q[1]*210;
+    byId('query-line').setAttribute('x2',String(x)); byId('query-line').setAttribute('y2',String(y));
+    byId('query-dot').setAttribute('cx',String(x)); byId('query-dot').setAttribute('cy',String(y));
+    byId('query-label').setAttribute('x',String(x+12)); byId('query-label').setAttribute('y',String(y-10));
+    byId('vector-value').textContent = 'q = ('+q.map(v => v.toFixed(3)).join('; ')+')';
+    const rows = items.map(item => ({...item,score:item.v.reduce((s,v,i) => s+v*q[i],0)})).sort((a,b) => b.score-a.score);
+    const list=byId('ranking'); list.replaceChildren();
+    rows.forEach((item,i) => { const li=document.createElement('li'); li.textContent=(i+1)+'. '+item.name+' · '+item.score.toFixed(3); const meter=document.createElement('div');meter.className='meter';meter.setAttribute('aria-hidden','true');const bar=document.createElement('span');bar.style.width=(Math.max(0,item.score)*100)+'%';meter.append(bar);li.append(meter);list.append(li); });
+    byId('vector-explanation').textContent = mode === 'like' ? 'Like B: hướng truy vấn tiến về B. Điểm của B tăng; ứng viên giống B cũng có thể được đẩy lên.' : mode === 'dislike' ? 'Dislike B: hướng truy vấn rời xa B. Điểm của B giảm; đây là tác động của phép tính vector, chưa phải bảo đảm mọi gợi ý tốt hơn.' : 'Ban đầu: C trùng hướng truy vấn nên có điểm cao nhất. Bấm like/dislike B để so sánh.';
+  }
+  byId('like-b').addEventListener('click',()=>renderVector('like'));
+  byId('dislike-b').addEventListener('click',()=>renderVector('dislike'));
+  byId('reset-vector').addEventListener('click',()=>renderVector('base'));
+  renderVector('base');
+  const form=byId('feedback-form'), open=byId('open-feedback'), result=byId('feedback-result'), reset=byId('reset-feedback');
+  function closeForm(){form.hidden=true;open.setAttribute('aria-expanded','false');}
+  function showOutfit(top,bottom){const box=byId('outfit-display');box.replaceChildren();[top,bottom].forEach(text=>{const span=document.createElement('span');span.textContent=text;box.append(span);});}
+  open.addEventListener('click',()=>{form.hidden=false;open.setAttribute('aria-expanded','true');result.textContent='Chưa đổi outfit. Bạn đang chọn lý do.';byId('reason').focus();});
+  byId('cancel-feedback').addEventListener('click',()=>{closeForm();result.textContent='Đã hủy. Bộ đồ và sở thích không đổi trong mô phỏng này.';open.focus();});
+  form.addEventListener('submit',event=>{event.preventDefault();if(!form.reportValidity())return;const choice=byId('reason').value;
+    if(choice==='top'){showOutfit('Áo thun trắng','Quần đen');result.textContent='Minh họa: chỉ thay áo, giữ quần.\nGhi nhận vấn đề ở kiểu áo; không gán dislike cho quần.';}
+    if(choice==='bottom'){showOutfit('Áo sơ mi trắng','Quần jeans xanh');result.textContent='Minh họa: chỉ thay quần, giữ áo.\nGhi nhận vấn đề ở kiểu quần; không gán dislike cho áo.';}
+    if(choice==='pair'){showOutfit('Áo sơ mi trắng','Quần kaki be');result.textContent='Minh họa: thử một tổ hợp khác.\nGhi nhận vấn đề cách phối; không kết luận bạn ghét từng món.';}
+    if(choice==='occasion'){showOutfit('Áo thun đơn giản','Quần jeans xanh');result.textContent='Minh họa: đổi sang bộ casual cho phiên hôm nay.\nChưa coi đây là thay đổi sở thích dài hạn.';}
+    closeForm();open.disabled=true;reset.hidden=false;reset.focus();
+  });
+  reset.addEventListener('click',()=>{showOutfit('Áo sơ mi trắng','Quần đen');form.reset();closeForm();open.disabled=false;reset.hidden=true;result.textContent='Bộ đồ giữ nguyên cho tới khi bạn xác nhận lý do.';open.focus();});
+})();
+</script>
+</body>
+</html>

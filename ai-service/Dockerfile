@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.14-slim
 WORKDIR /app
 # Bản CPU của torch (nhẹ, chạy được trên cả Mac Apple Silicon lẫn Windows/WSL2).
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

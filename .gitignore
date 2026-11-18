@@ -14,7 +14,12 @@ frontend/.next/
 ai-service/.venv/
 __pycache__/
 *.pyc
+# local experiment inputs, trained checkpoints and reports
+experiments/
+ai-service/checkpoints/
 # ide/os
 .idea/
 .DS_Store
 Thumbs.db
+# Excel temporary lock files
+~$*.xlsx

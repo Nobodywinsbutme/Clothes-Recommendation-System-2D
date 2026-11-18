@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giải đáp: cách gợi ý, embedding, Qdrant và chọn database – Group 10</title>
+<style>
+:root{--bg:#F4F6FA;--card:#FFFFFF;--ink:#18202D;--mute:#5B6678;--line:#D9DFEA;--acc:#2D5BE3;--acc-bg:#E7EDFD;--ok:#17806A;--ok-bg:#DFF3EE;--no:#B8402B;--no-bg:#FBE7E2;--code:#EEF1F7}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10151D;--card:#182030;--ink:#E7ECF5;--mute:#9AA6BB;--line:#2A3548;--acc:#7C9CFF;--acc-bg:#1F2C52;--ok:#52C9AA;--ok-bg:#123A33;--no:#FF8F78;--no-bg:#3F1F19;--code:#1E283A}}
+*{box-sizing:border-box}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 20px 72px}
+h1{font-size:clamp(1.7rem,4vw,2.3rem);line-height:1.2;margin:0 0 10px;letter-spacing:-.01em}
+h2{font-size:1.4rem;margin:48px 0 12px;line-height:1.3}
+h3{font-size:1.05rem;margin:22px 0 6px}
+p{margin:0 0 12px;max-width:72ch}
+.lead{color:var(--mute);font-size:1.05rem}
+section{border-top:1px solid var(--line);margin-top:8px}
+ul,ol{padding-left:22px;margin:0 0 12px}li{margin-bottom:5px}
+code{background:var(--code);padding:1px 6px;border-radius:4px;font:.9em Consolas,Menlo,monospace}
+pre{background:var(--code);padding:14px 16px;border-radius:8px;overflow-x:auto;font:.88rem/1.55 Consolas,Menlo,monospace;margin:0 0 14px}
+.verdict{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:20px 0}
+.verdict div{background:var(--acc-bg);border-left:4px solid var(--acc);padding:14px 16px;border-radius:0 8px 8px 0}
+.verdict b{display:block;margin-bottom:4px}
+.tbl{overflow-x:auto;margin:0 0 16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.95rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+.yes{color:var(--ok);font-weight:600}.nope{color:var(--no);font-weight:600}
+.q{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:8px}
+.note{background:var(--no-bg);border-left:4px solid var(--no);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:14px 0}
+.flow span{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.92rem;flex:1 1 150px}
+svg{max-width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}
+svg text{fill:var(--ink);font:13px "Segoe UI",system-ui,sans-serif}
+</style>
+</head>
+<body>
+<main>
+<h1>Gợi ý trang phục: chọn cách recommend, database, và hiểu embedding / Qdrant / CLIP</h1>
+<p class="lead">Tài liệu giải đáp các thắc mắc của cậu cho đề tài Clothing Suggestion (DeepFashion). Đọc phần "Kết luận" trước, các phần sau giải thích lý do.</p>
+
+<h2 id="thac-mac">1. Tui hiểu cậu đang thắc mắc những gì</h2>
+<div class="q">Nên dùng cách recommend nào? (cậu mới biết collaborative filtering và POG)</div>
+<div class="q">Bộ câu hỏi onboarding phụ thuộc vào cách recommend, vậy phải chốt cách recommend trước?</div>
+<div class="q">Embedding ra vector để làm gì? Qdrant để làm gì?</div>
+<div class="q">CLIP score là gì, dùng vào đâu?</div>
+<div class="q">Có nên làm database bây giờ không? PostgreSQL, MySQL hay MongoDB?</div>
+
+<h2 id="ket-luan">2. Kết luận</h2>
+<div class="verdict">
+<div><b>Cách recommend</b>Content-based filtering dùng embedding CLIP, cộng với cập nhật theo like/dislike trong phiên (kiểu Rocchio). Không dùng collaborative filtering hay POG.</div>
+<div><b>Database</b>Giữ MySQL cho dữ liệu người dùng (backend đã dùng sẵn) và Qdrant cho vector + thông tin món đồ. Không cần PostgreSQL hay MongoDB.</div>
+<div><b>Làm database bây giờ?</b>Có, nhưng chỉ thêm vài bảng nhỏ. Phần nặng (nạp DeepFashion vào Qdrant) làm khi dữ liệu tải xong.</div>
+</div>
+
+<h2 id="vi-sao">3. Vì sao không dùng collaborative filtering và POG</h2>
+<div class="tbl"><table>
+<tr><th>Cách</th><th>Cần gì</th><th>Có phù hợp đề tài?</th></tr>
+<tr><td>Collaborative filtering</td><td>Bảng tương tác nhiều người dùng × món đồ (click, mua, rating). Ý tưởng: "người giống bạn thích gì thì gợi ý cho bạn".</td><td class="nope">Không. DeepFashion chỉ có ảnh và nhãn, không có lịch sử người dùng. Proposal của nhóm cũng nói rõ là "zero-history", tức là bài toán cold-start mà CF không giải được.</td></tr>
+<tr><td>POG (Personalized Outfit Generation)</td><td>Dữ liệu click/mua thật của người dùng trên nền tảng thương mại (bài gốc dùng dữ liệu Alibaba/Taobao) và mô hình sâu để chấm độ hợp của cả bộ đồ.</td><td class="nope">Không. Thiếu dữ liệu người dùng, và huấn luyện mô hình lớn vượt phạm vi một đồ án 12 tuần. Nhưng POG hữu ích để <b>trích dẫn trong phần Related Work</b>.</td></tr>
+<tr><td>Content-based + CLIP</td><td>Chỉ cần ảnh và nhãn món đồ, cùng câu trả lời của người dùng ngay trong phiên.</td><td class="yes">Có. Khớp đúng mục tiêu proposal: học sở thích từ ít tương tác, không cần lịch sử.</td></tr>
+</table></div>
+<p>Một điểm cần trung thực khi viết báo cáo: proposal ghi "content-based filtering theo category/color/style". Dùng CLIP embedding là bản nâng cấp của ý đó (thay vì khớp nhãn cứng thì so khớp độ giống trong không gian vector). Nhóm nên cập nhật mô tả này trong báo cáo cuối.</p>
+
+<h2 id="embedding">4. Embedding là gì và để làm gì</h2>
+<p>Embedding là biến một ảnh (hoặc một câu văn) thành một dãy số, gọi là vector. Với model CLIP nhóm đang dùng (<code>clip-vit-base-patch32</code>) thì mỗi ảnh hay câu thành <b>vector 512 số</b>. Điều quan trọng là: <b>hai thứ giống nhau về ý nghĩa thì vector nằm gần nhau</b>. Hơn nữa CLIP đưa cả ảnh và chữ vào <b>cùng một không gian</b>, nên câu "áo sơ mi trắng đi làm" sẽ nằm gần ảnh áo sơ mi trắng.</p>
+<p>Nhờ vậy, "độ giống" trở thành phép tính: đo khoảng cách (thường là cosine similarity) giữa hai vector. Đây là nền tảng cho mọi thứ phía sau:</p>
+<ul>
+<li>Câu trả lời onboarding → ghép thành câu mô tả → vector điểm xuất phát của người dùng.</li>
+<li>Món đồ nào gần vector người dùng nhất thì được gợi ý trước.</li>
+<li>Bấm like/dislike → dịch vector người dùng lại gần/ra xa món đó.</li>
+</ul>
+
+<h2 id="qdrant">5. Qdrant để làm gì</h2>
+<p>Sau khi nhúng, mỗi món đồ có một vector 512 số. Với hàng chục nghìn ảnh DeepFashion, việc "tìm top 20 vector gần nhất với vector người dùng" cần một chỗ lưu và tìm nhanh. Qdrant là vector database làm đúng việc đó:</p>
+<ul>
+<li>Lưu vector cùng thông tin đi kèm (payload): đường dẫn ảnh, category, attribute.</li>
+<li>Tìm láng giềng gần nhất rất nhanh (dùng chỉ mục xấp xỉ HNSW), thay vì so với từng ảnh một.</li>
+<li>Lọc kèm theo điều kiện, ví dụ "chỉ trong category Dress" hoặc "bỏ các món đã dislike".</li>
+</ul>
+<p>Trung thực: nếu chỉ dùng vài nghìn ảnh thì tính bằng numpy cũng đủ nhanh. Nhưng nhóm đã dựng sẵn Qdrant trong Docker, nó gọn khi cần lọc theo payload, và việc dùng vector database cũng có giá trị trong báo cáo. Nên giữ.</p>
+<div class="flow">
+<span><b>Ngoại tuyến (làm 1 lần)</b><br>Ảnh DeepFashion → CLIP → vector → lưu vào Qdrant</span>
+<span><b>Lúc người dùng dùng</b><br>Trả lời onboarding → vector người dùng → Qdrant tìm gần nhất → hiển thị</span>
+<span><b>Mỗi lần like/dislike</b><br>Cập nhật vector người dùng → Qdrant tìm lại → danh sách mới</span>
+</div>
+
+<h2 id="cach-rec">6. Cách recommend đề xuất, từng bước</h2>
+<ol>
+<li><b>Vector ban đầu.</b> Từ câu trả lời onboarding, ghép thành câu mô tả, ví dụ "casual streetwear outfit for a party", rồi nhúng bằng CLIP text → vector <code>q</code>.</li>
+<li><b>Lọc cứng nếu cần.</b> Câu trả lời rõ ràng (ví dụ chỉ muốn đầm) dùng làm bộ lọc category trong Qdrant.</li>
+<li><b>Gợi ý.</b> Lấy top-N món đồ gần <code>q</code> nhất, bỏ món đã xem.</li>
+<li><b>Học từ feedback.</b> Với mỗi lần like/dislike, cập nhật vector theo công thức Rocchio:</li>
+</ol>
+<pre>q' = α·q + β·mean(vector các món đã like) − γ·mean(vector các món đã dislike)
+(ví dụ α=1.0, β=0.8, γ=0.4, rồi chuẩn hóa q' về độ dài 1)</pre>
+<p>Sau đó tìm lại top-N với <code>q'</code>. Đây chính là "re-rank theo thời gian thực" trong proposal. Công thức đơn giản, tính tức thì, giải thích được trong báo cáo, và các hệ số α, β, γ là thứ nhóm có thể thử nghiệm.</p>
+
+<svg viewBox="0 0 640 250" role="img" aria-label="Vector người dùng dịch về phía món đã like và ra xa món đã dislike">
+<rect x="0" y="0" width="640" height="250" fill="none"/>
+<g fill="none" stroke-width="2">
+<circle cx="420" cy="90" r="9" fill="#17806A" stroke="none"/><circle cx="470" cy="130" r="9" fill="#17806A" stroke="none"/><circle cx="440" cy="60" r="9" fill="#17806A" stroke="none"/>
+<circle cx="150" cy="190" r="9" fill="#B8402B" stroke="none"/><circle cx="110" cy="150" r="9" fill="#B8402B" stroke="none"/>
+<circle cx="260" cy="150" r="9" fill="#9AA6BB" stroke="none"/><circle cx="330" cy="200" r="9" fill="#9AA6BB" stroke="none"/><circle cx="520" cy="190" r="9" fill="#9AA6BB" stroke="none"/><circle cx="560" cy="80" r="9" fill="#9AA6BB" stroke="none"/>
+<circle cx="270" cy="105" r="10" fill="#2D5BE3" stroke="none"/>
+<circle cx="385" cy="95" r="10" fill="none" stroke="#2D5BE3" stroke-dasharray="4 3"/>
+<path d="M282 103 L371 96" stroke="#2D5BE3"/><path d="M371 96 l-9 -5 m9 5 l-9 5" stroke="#2D5BE3"/>
+</g>
+<text x="215" y="85">q (ban đầu)</text><text x="352" y="128">q' (sau feedback)</text>
+<text x="400" y="40" style="fill:#17806A">đã like</text><text x="70" y="215" style="fill:#B8402B">đã dislike</text>
+<text x="20" y="240">Mỗi chấm là một món đồ trong không gian vector (vẽ 2 chiều cho dễ hình dung; thực tế là 512 chiều).</text>
+</svg>
+
+<h3>Phần có thể thêm nếu còn thời gian</h3>
+<ul>
+<li><b>Đa dạng hóa:</b> thỉnh thoảng chèn một món hơi khác để người dùng khám phá (tránh kết quả quá giống nhau).</li>
+<li><b>Gợi ý cả bộ đồ:</b> ghép áo + quần + giày từ các category khác nhau có vector gần nhau. Đây là phiên bản rất đơn giản của ý tưởng POG.</li>
+</ul>
+
+<h2 id="clip-score">7. CLIP score là gì</h2>
+<p>CLIP score về bản chất là <b>cosine similarity giữa vector ảnh và vector câu mô tả</b>, tức là độ khớp giữa ảnh và chữ. (Bản CLIPScore trong các bài nghiên cứu còn nhân thêm một hệ số và cắt giá trị âm về 0, nhưng ý tưởng giống nhau.) Cậu dùng nó vào hai việc:</p>
+<ul>
+<li><b>Chấm điểm khi gợi ý:</b> điểm khớp giữa câu mô tả từ onboarding và từng món đồ chính là cơ sở xếp hạng ở bước 3. Qdrant đã trả về luôn con số này.</li>
+<li><b>Đo kết quả trong báo cáo:</b> so sánh độ khớp trung bình của top-N trước và sau khi người dùng bấm like/dislike. Lưu ý chỉ số này đo "khớp với mô tả" chứ không phải "người dùng có thích", nên nên dùng cùng một cách đánh giá khác, ở mục 10.</li>
+</ul>
+
+<h2 id="database">8. Chọn database</h2>
+<div class="tbl"><table>
+<tr><th>Lựa chọn</th><th>Nhận xét cho đề tài này</th></tr>
+<tr><td><b>MySQL</b> (đang dùng)</td><td class="yes">Giữ. Dữ liệu người dùng, lịch sử, feedback có cấu trúc rõ, quan hệ rõ (user có nhiều lịch sử). Backend Spring Boot đã dùng JPA + MySQL, entity <code>User</code> và <code>OutfitHistory</code> đã chạy.</td></tr>
+<tr><td>PostgreSQL</td><td>Cũng phù hợp, và có thể thêm pgvector để gộp luôn vector vào cùng DB. Nhưng đổi sang là phải sửa cấu hình và test lại, không mang thêm giá trị cho đề tài khi nhóm đã có Qdrant.</td></tr>
+<tr><td>MongoDB</td><td class="nope">Không cần. Dữ liệu của nhóm không linh hoạt hay lồng nhau đến mức cần document store, và thêm một loại DB nữa chỉ làm hệ thống rối hơn.</td></tr>
+<tr><td><b>Qdrant</b></td><td class="yes">Giữ cho vector + thông tin món đồ DeepFashion. Không thay thế MySQL, hai cái làm hai việc khác nhau.</td></tr>
+</table></div>
+<p><b>Phân vai:</b> MySQL lưu "ai là người dùng, họ đã làm gì"; Qdrant lưu "có những món đồ nào và chúng giống nhau ra sao". Thông tin món đồ (category, attribute, đường dẫn ảnh) để trong payload của Qdrant, không cần nhân đôi sang MySQL ở giai đoạn prototype.</p>
+
+<h3>Có nên làm database bây giờ?</h3>
+<p>Có, ở mức nhỏ. Hiện đã có bảng <code>users</code> và <code>outfit_history</code>. Chỉ cần thêm:</p>
+<pre>feedback(id, user_id, session_id, item_id, action  -- 'like' | 'dislike',
+         created_at)
+
+-- cột users.style_profile_json đã có sẵn để lưu câu trả lời onboarding</pre>
+<p><code>item_id</code> là id của món đồ trong Qdrant. Bảng <code>feedback</code> cũng là dữ liệu để chứng minh "gợi ý tốt dần" trong báo cáo. Phần còn lại của database (nạp ảnh DeepFashion) làm sau, khi dữ liệu tải xong.</p>
+
+<h2 id="onboarding">9. Bộ câu hỏi onboarding: giờ đã chốt được</h2>
+<p>Khi đã chọn content-based + CLIP, mỗi câu hỏi phải dùng được theo một trong hai cách: thành <b>bộ lọc</b> hoặc thành <b>chữ ghép vào câu mô tả</b>. Gợi ý ban đầu:</p>
+<div class="tbl"><table>
+<tr><th>Câu hỏi</th><th>Lựa chọn ví dụ</th><th>Dùng như thế nào</th></tr>
+<tr><td>Phong cách</td><td>Casual, streetwear, thanh lịch, thể thao, vintage</td><td>Chữ ghép vào câu mô tả</td></tr>
+<tr><td>Dịp mặc</td><td>Đi học/làm, hẹn hò, tiệc, dạo phố, thể thao</td><td>Chữ ghép vào câu mô tả</td></tr>
+<tr><td>Loại đồ muốn xem</td><td>Áo, quần, váy/đầm, đồ ngoài</td><td>Bộ lọc category trong Qdrant</td></tr>
+<tr><td>Màu yêu thích</td><td>Trung tính, tươi sáng, tối</td><td>Chữ ghép vào câu mô tả</td></tr>
+<tr><td>Dáng người</td><td>Vài nhóm dáng cơ bản</td><td>Chữ ghép vào câu mô tả</td></tr>
+</table></div>
+<div class="note"><b>Lưu ý trung thực:</b> DeepFashion không có nhãn "dáng người" hay "dịp mặc", và tui không chắc bộ 1,000 attribute có nhóm màu riêng, cậu cần kiểm tra file attribute sau khi tải. Vì vậy các câu hỏi này chỉ tác động gián tiếp qua câu mô tả CLIP, hiệu quả sẽ yếu hơn bộ lọc theo category. Báo cáo nên nêu rõ giới hạn này thay vì hứa hẹn quá mức.</div>
+
+<h2 id="danh-gia">10. Chứng minh "gợi ý tốt dần"</h2>
+<p>Đây là kết quả mong đợi của proposal, và cần một cách đo rõ ràng. Gợi ý cách làm không cần người thật:</p>
+<ul>
+<li>Tạo "người dùng giả" có sở thích ẩn (ví dụ thích category Dress + attribute floral).</li>
+<li>Cho người dùng giả bấm like/dislike tự động theo sở thích ẩn đó qua nhiều vòng.</li>
+<li>Sau mỗi vòng đo <b>precision@10</b>: trong 10 món được gợi ý, bao nhiêu món khớp sở thích ẩn. Vẽ biểu đồ theo vòng, có feedback so với không feedback.</li>
+<li>Sau đó, nếu kịp, thử thêm với vài bạn trong nhóm hoặc lớp để có đánh giá thật.</li>
+</ul>
+
+<h2 id="viec-tiep">11. Việc tiếp theo</h2>
+<ol>
+<li>Đồng ý hướng content-based + CLIP + Rocchio và ghi vào báo cáo kèm lý do loại CF và POG.</li>
+<li>Thêm bảng <code>feedback</code> ở backend.</li>
+<li>Chốt danh sách câu hỏi onboarding theo bảng ở mục 9.</li>
+<li>Khi DeepFashion tải xong: viết script ingest (đọc nhãn, nhúng ảnh, nạp Qdrant), rồi làm <code>/recommend</code> và <code>/feedback</code> ở ai-service.</li>
+</ol>
+</main>
+</body>
+</html>
